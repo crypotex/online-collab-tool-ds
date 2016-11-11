@@ -1,104 +1,112 @@
 # Code taken from https://www.binpress.com/tutorial/building-a-text-editor-with-pyqt-part-one/143
+# Code for line numbers
+# https://stackoverflow.com/questions/40386194/create-text-area-textedit-with-line-number-in-pyqt-5
 
 import sys
 from PyQt4 import QtGui
 
-
-from PyQt4.Qt import QFrame
 from PyQt4.Qt import QPainter
 from PyQt4.Qt import QPlainTextEdit
 from PyQt4.Qt import QRect
 from PyQt4.Qt import QTextEdit
 from PyQt4.Qt import QTextFormat
-from PyQt4.Qt import QVariant
 from PyQt4.Qt import QWidget
 from PyQt4.Qt import Qt
+from PyQt4.QtCore import QSize, SIGNAL
+from PyQt4.QtGui import QColor
 
 
-class NumberBar(QWidget):
-    def __init__(self, edit):
-        QWidget.__init__(self, edit)
+class LineNumberArea(QWidget):
+    def __init__(self, editor):
+        super(LineNumberArea, self).__init__(editor)
+        self.myeditor = editor
 
-        self.edit = edit
-        self.adjustWidth(1)
+    def sizeHint(self):
+        return QSize(self.editor.line_number_area_width(), 0)
 
     def paintEvent(self, event):
-        self.edit.numberbarPaint(self, event)
-        QWidget.paintEvent(self, event)
+        self.myeditor.line_number_area_paint_event(event)
 
-    def adjustWidth(self, count):
-        width = self.fontMetrics().width(unicode(count))
-        if self.width() != width:
-            self.setFixedWidth(width)
 
-    def updateContents(self, rect, scroll):
-        if scroll:
-            self.scroll(0, scroll)
+class CodeEditor(QPlainTextEdit):
+    def __init__(self):
+        super(CodeEditor, self).__init__()
+        self.lineNumberArea = LineNumberArea(self)
+
+        self.connect(self, SIGNAL('blockCountChanged(int)'), self.update_line_number_area_width)
+        self.connect(self, SIGNAL('updateRequest(QRect,int)'), self.update_line_number_area)
+        self.connect(self, SIGNAL('cursorPositionChanged()'), self.highlight_current_line)
+
+        self.update_line_number_area_width(0)
+
+    def line_number_area_width(self):
+        digits = 1
+        count = max(1, self.blockCount())
+        while count >= 10:
+            count /= 10
+            digits += 1
+        space = 3 + self.fontMetrics().width('9') * digits
+        return space
+
+    def update_line_number_area_width(self, _):
+        self.setViewportMargins(self.line_number_area_width(), 0, 0, 0)
+
+    def update_line_number_area(self, rect, dy):
+
+        if dy:
+            self.lineNumberArea.scroll(0, dy)
         else:
-            # It would be nice to do
-            # self.update(0, rect.y(), self.width(), rect.height())
-            # But we can't because it will not remove the bold on the
-            # current line if word wrap is enabled and a new block is
-            # selected.
-            self.update()
+            self.lineNumberArea.update(0, rect.y(), self.lineNumberArea.width(),
+                                       rect.height())
 
+        if rect.contains(self.viewport().rect()):
+            self.update_line_number_area_width(0)
 
-class PlainTextEdit(QPlainTextEdit):
-    def __init__(self, *args):
-        QPlainTextEdit.__init__(self, *args)
+    def resizeEvent(self, event):
+        super(CodeEditor, self).resizeEvent(event)
 
-        self.setFrameStyle(QFrame.NoFrame)
-        self.highlight()
-        self.setLineWrapMode(QPlainTextEdit.NoWrap)
+        cr = self.contentsRect()
+        self.lineNumberArea.setGeometry(QRect(cr.left(), cr.top(),
+                                              self.line_number_area_width(), cr.height()))
 
-        # self.cursorPositionChanged.connect(self.highlight)
+    def line_number_area_paint_event(self, event):
+        mypainter = QPainter(self.lineNumberArea)
 
-    def highlight(self):
-        hi_selection = QTextEdit.ExtraSelection()
-
-        hi_selection.format.setBackground(self.palette().alternateBase())
-        hi_selection.format.setProperty(QTextFormat.FullWidthSelection, QVariant(True))
-        hi_selection.cursor = self.textCursor()
-        hi_selection.cursor.clearSelection()
-
-        self.setExtraSelections([hi_selection])
-
-    def numberbarPaint(self, number_bar, event):
-        font_metrics = self.fontMetrics()
-        current_line = self.document().findBlock(self.textCursor().position()).blockNumber() + 1
+        mypainter.fillRect(event.rect(), Qt.lightGray)
 
         block = self.firstVisibleBlock()
-        line_count = block.blockNumber()
-        painter = QPainter(number_bar)
-        painter.fillRect(event.rect(), self.palette().base())
+        block_number = block.blockNumber()
+        top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
+        bottom = top + self.blockBoundingRect(block).height()
 
-        # Iterate over all visible text blocks in the document.
-        while block.isValid():
-            line_count += 1
-            block_top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
-
-            # Check if the position of the block is out side of the visible
-            # area.
-            if not block.isVisible() or block_top >= event.rect().bottom():
-                break
-
-            # We want the line number for the selected line to be bold.
-            if line_count == current_line:
-                font = painter.font()
-                font.setBold(True)
-                painter.setFont(font)
-            else:
-                font = painter.font()
-                font.setBold(False)
-                painter.setFont(font)
-
-            # Draw the line number right justified at the position of the line.
-            paint_rect = QRect(0, block_top, number_bar.width(), font_metrics.height())
-            painter.drawText(paint_rect, Qt.AlignRight, unicode(line_count))
+        # Just to make sure I use the right font
+        height = self.fontMetrics().height()
+        while block.isValid() and (top <= event.rect().bottom()):
+            if block.isVisible() and (bottom >= event.rect().top()):
+                number = str(block_number + 1)
+                mypainter.setPen(Qt.black)
+                mypainter.drawText(0, top, self.lineNumberArea.width(), height,
+                                   Qt.AlignRight, number)
 
             block = block.next()
+            top = bottom
+            bottom = top + self.blockBoundingRect(block).height()
+            block_number += 1
 
-        painter.end()
+    def highlight_current_line(self):
+        extra_selections = []
+
+        if not self.isReadOnly():
+            selection = QTextEdit.ExtraSelection()
+
+            line_color = QColor(Qt.yellow).lighter(160)
+
+            selection.format.setBackground(line_color)
+            selection.format.setProperty(QTextFormat.FullWidthSelection, True)
+            selection.cursor = self.textCursor()
+            selection.cursor.clearSelection()
+            extra_selections.append(selection)
+        self.setExtraSelections(extra_selections)
 
 
 class Main(QtGui.QMainWindow):
@@ -107,9 +115,9 @@ class Main(QtGui.QMainWindow):
 
         self.filename = ""
 
-        self.initUI()
+        self.init_ui()
 
-    def initToolbar(self):
+    def init_toolbar(self):
         self.newAction = QtGui.QAction(QtGui.QIcon("icons/add-file.png"), "New", self)
         self.newAction.setStatusTip("Create a new document from scratch.")
         self.newAction.setShortcut("Ctrl+N")
@@ -132,9 +140,6 @@ class Main(QtGui.QMainWindow):
         self.toolbar.addAction(self.saveAction)
 
         self.toolbar.addSeparator()
-
-        # Makes the next toolbar appear underneath this one
-        self.addToolBarBreak()
 
         # self.cutAction = QtGui.QAction(QtGui.QIcon("icons/cut.png"), "Cut to clipboard", self)
         # self.cutAction.setStatusTip("Delete and copy text to clipboard")
@@ -169,34 +174,32 @@ class Main(QtGui.QMainWindow):
 
         self.toolbar.addSeparator()
 
-    def initFormatbar(self):
+    def init_formatbar(self):
         self.formatbar = self.addToolBar("Format")
 
-    def initMenubar(self):
+    def init_menubar(self):
         menubar = self.menuBar()
 
-        file = menubar.addMenu("File")
-        edit = menubar.addMenu("Edit")
+        menubar_file = menubar.addMenu("File")
+        menubar_edit = menubar.addMenu("Edit")
 
-        file.addAction(self.newAction)
-        file.addAction(self.openAction)
-        file.addAction(self.saveAction)
+        menubar_file.addAction(self.newAction)
+        menubar_file.addAction(self.openAction)
+        menubar_file.addAction(self.saveAction)
 
-        edit.addAction(self.undoAction)
-        edit.addAction(self.redoAction)
+        menubar_edit.addAction(self.undoAction)
+        menubar_edit.addAction(self.redoAction)
         # edit.addAction(self.cutAction)
         # edit.addAction(self.copyAction)
         # edit.addAction(self.pasteAction)
 
-    def initUI(self):
-        self.text = PlainTextEdit(self)
+    def init_ui(self):
+        self.text = CodeEditor()
         self.setCentralWidget(self.text)
 
-        self.number_bar = NumberBar(self.text)
-
-        self.initToolbar()
-        self.initFormatbar()
-        self.initMenubar()
+        self.init_toolbar()
+        self.init_formatbar()
+        self.init_menubar()
 
         # Initialize a statusbar for the window
         self.statusbar = self.statusBar()
@@ -208,9 +211,9 @@ class Main(QtGui.QMainWindow):
 
         self.text.setTabStopWidth(33)
         self.setWindowIcon(QtGui.QIcon("icons/icon.png"))
-        self.text.cursorPositionChanged.connect(self.cursorPosition)
+        self.text.cursorPositionChanged.connect(self.cursor_position)
 
-    def cursorPosition(self):
+    def cursor_position(self):
 
         cursor = self.text.textCursor()
 
@@ -246,8 +249,8 @@ class Main(QtGui.QMainWindow):
 
         # We just store the contents of the text file along with the
         # format in html, which Qt does in a very nice way for us
-        with open(self.filename, "wt") as file:
-            file.write(self.text.toPlainText())
+        with open(self.filename, "wt") as save_file:
+            save_file.write(self.text.toPlainText())
 
 
 def main():
