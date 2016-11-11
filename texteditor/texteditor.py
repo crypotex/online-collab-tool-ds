@@ -45,7 +45,7 @@ class CodeEditor(QPlainTextEdit):
         while count >= 10:
             count /= 10
             digits += 1
-        space = 3 + self.fontMetrics().width('9') * digits
+        space = 3 + self.fontMetrics().width('30') * digits
         return space
 
     def update_line_number_area_width(self, _):
@@ -86,7 +86,7 @@ class CodeEditor(QPlainTextEdit):
                 number = str(block_number + 1)
                 mypainter.setPen(Qt.black)
                 mypainter.drawText(0, top, self.lineNumberArea.width(), height,
-                                   Qt.AlignRight, number)
+                                   Qt.AlignCenter, number)
 
             block = block.next()
             top = bottom
