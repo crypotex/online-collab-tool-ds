@@ -14,7 +14,7 @@ from PyQt4.Qt import QWidget
 from PyQt4.Qt import Qt
 from PyQt4.QtCore import QSize, SIGNAL
 from PyQt4.QtGui import QColor
-
+from PyQt4.QtNetwork import QTcpSocket
 
 class LineNumberArea(QWidget):
     def __init__(self, editor):
@@ -29,7 +29,7 @@ class LineNumberArea(QWidget):
 
 
 class CodeEditor(QPlainTextEdit):
-    def __init__(self):
+    def __init__(self, sokk):
         super(CodeEditor, self).__init__()
         self.lineNumberArea = LineNumberArea(self)
 
@@ -38,6 +38,7 @@ class CodeEditor(QPlainTextEdit):
         self.connect(self, SIGNAL('cursorPositionChanged()'), self.highlight_current_line)
 
         self.update_line_number_area_width(0)
+        self.sokk = sokk
 
     def line_number_area_width(self):
         digits = 1
@@ -108,9 +109,19 @@ class CodeEditor(QPlainTextEdit):
             extra_selections.append(selection)
         self.setExtraSelections(extra_selections)
 
+    def keyReleaseEvent(self, QKeyEvent):
+        l = QKeyEvent.text()
+        cursor_loc = self.textCursor()
+        blck_nr = cursor_loc.blockNumber() +1
+        col_nr = cursor_loc.columnNumber()
+        s = None
+        self.sokk.writeData("%s*%d*%d" % (l, blck_nr, col_nr))
 
 class Main(QtGui.QMainWindow):
     def __init__(self, parent=None):
+        self.clientSocket = QTcpSocket()
+        self.connectToServer()
+
         QtGui.QMainWindow.__init__(self, parent)
 
         self.filename = ""
@@ -194,7 +205,7 @@ class Main(QtGui.QMainWindow):
         # edit.addAction(self.pasteAction)
 
     def init_ui(self):
-        self.text = CodeEditor()
+        self.text = CodeEditor(self.clientSocket)
         self.setCentralWidget(self.text)
 
         self.init_toolbar()
@@ -251,6 +262,13 @@ class Main(QtGui.QMainWindow):
         # format in html, which Qt does in a very nice way for us
         with open(self.filename, "wt") as save_file:
             save_file.write(self.text.toPlainText())
+
+    # Create connection to server
+    def connectToServer(self):
+        print("Connecting to server")
+        self.clientSocket.connectToHost("localhost", 49999)
+        self.clientSocket.waitForConnected(-1) # Might use a better timeout here ...
+
 
 
 def main():
