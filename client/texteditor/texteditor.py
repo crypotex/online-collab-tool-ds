@@ -114,8 +114,9 @@ class CodeEditor(QPlainTextEdit):
         cursor_loc = self.textCursor()
         blck_nr = cursor_loc.blockNumber() +1
         col_nr = cursor_loc.columnNumber()
-        s = None
         self.sokk.writeData("%s*%d*%d" % (l, blck_nr, col_nr))
+        msg = self.sokk.readData(1024)
+        print(msg)
 
 class Main(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -266,7 +267,7 @@ class Main(QtGui.QMainWindow):
     # Create connection to server
     def connectToServer(self):
         print("Connecting to server")
-        self.clientSocket.connectToHost("localhost", 49999)
+        self.clientSocket.connectToHost("localhost", 49998)
         self.clientSocket.waitForConnected(-1) # Might use a better timeout here ...
 
 

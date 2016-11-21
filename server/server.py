@@ -11,7 +11,7 @@ class Server:
     def socket_init(self, server_ip):
         """ Socket Initialization """
         host = server_ip
-        port = 49999
+        port = 49998
         backlog = 5
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((host, port))
@@ -26,6 +26,8 @@ class Server:
             print(accept)
             while 1:
                 msg = client.recvfrom(1024)
+                print(msg[0].split("*"))
+                client.send(msg[0].split("*")[0])
                 print(msg)
 
 if __name__ == "__main__":
