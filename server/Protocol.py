@@ -15,7 +15,8 @@ class ServerProtocol:
             # TODO: CREATE NEW FILE IN CLIENT
             return msg
         elif eventString.startswith('o'):
-            msg, txt = self.file.open_file(eventString[2:])
+            file = eventString.strip().split("*")[-1]
+            msg, txt = self.file.open_file(file)
             if msg == "OK":
                 self.text = txt
             # TODO: RETURN WHOLE TEXT

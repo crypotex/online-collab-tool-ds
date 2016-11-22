@@ -16,9 +16,13 @@ from PyQt4.Qt import QWidget
 from PyQt4.Qt import Qt
 from PyQt4.QtCore import QSize, SIGNAL
 from PyQt4.QtGui import QColor
+from PyQt4.QtGui import QComboBox
+from PyQt4.QtGui import QDialog
 from PyQt4.QtGui import QInputDialog
 from PyQt4.QtGui import QMessageBox
 from PyQt4.QtGui import QPixmap
+from PyQt4.QtGui import QPushButton
+from PyQt4.QtGui import QVBoxLayout
 
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
 DEFAULT_SERVER_PORT = 49995
@@ -248,7 +252,7 @@ class Main(QtGui.QMainWindow):
     def new(self):
         filename, ok = QInputDialog.getText(self, 'Choose file name', 'Enter file name:')
         if str(filename).endswith('.txt') and ok:
-            self.sokk.send('%s*%s' % ('n', filename))
+            self.sokk.sendall('%s*%s' % ('n', filename))
         else:
             warning = QMessageBox()
             warning.setIconPixmap(QPixmap("icons/Error-96.png"))
@@ -259,13 +263,15 @@ class Main(QtGui.QMainWindow):
             # TODO: Saa serverilt vastus, kas OK v NOK
 
     def open(self):
+        self.sokk.sendall('%s*' % 'l')
 
-        # Get filename and show only .writer files
-        self.filename = QtGui.QFileDialog.getOpenFileName(self, 'Open File', ".", "(*.txt)")
+        response = self.sokk.recv(1024)
+        if response:
+            fileslist = eval(response)
+            if fileslist:
+                self.dialogForFiles(fileslist)
 
-        if self.filename:
-            with open(self.filename, "rt") as file:
-                self.text.setPlainText(file.read())
+        # TODO: Serverilt saab vastuse, kui fail olemas, aga lugemine ja n2itamine aknas puudu
 
     def save(self):
 
@@ -288,6 +294,36 @@ class Main(QtGui.QMainWindow):
         sokk = socket(AF_INET, SOCK_STREAM)
         sokk.connect((server_addr, port))
         return sokk
+
+    # Opens a dialog which shows the files in server and where client can choose the file to be opened
+    def dialogForFiles(self, fileslist):
+        layout = QVBoxLayout()
+
+        dialog = QDialog(self)
+        dialog.setLayout(layout)
+        dialog.setWindowTitle('Choose file from the list')
+        dialog.setMinimumSize(200, 80)
+        dialog.setGeometry(400, 400, 300, 80)
+        dialog.show()
+
+        box = QComboBox()
+        box.clear()
+        box.addItems(fileslist)
+
+        layout.addWidget(box)
+
+        button = QPushButton("OK")
+        layout.addWidget(button)
+        button.clicked.connect(lambda: self.clickHandler(str(box.currentText()), dialog))
+
+    # Sends the filename to server for open and closes the dialog box
+    def clickHandler(self, txt, dialog):
+        self.sokk.sendall('o*' + txt)
+        if self.sokk.recv(1024).split("*")[0] == "OK":
+            dialog.hide()
+        else:
+            print("File with such name does not exist.")
+
 
 
 def main():
