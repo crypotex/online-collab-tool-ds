@@ -1,5 +1,9 @@
 class FileHandler:
-    def __init__(self, eventString):
-        fname = eventString
-        if fname != "":
-            fname = "kala"
+    def __init__(self):
+        self.fname = ""
+
+    def new_file(self, event):
+        pass
+
+    def open_file(self, event):
+        pass

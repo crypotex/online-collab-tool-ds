@@ -56,6 +56,8 @@ class Server:
         while True:
             try:
                 msg = client.recv(DEFAULT_BUFFER_SIZE)
+                if len(msg) == 0:
+                    break
                 LOG.debug("Recieved message from client %s. Message was: %s." % (address, msg))
                 response = self.editor.handleEvent(msg)
                 LOG.debug("Sending response: %s to client %s." % (response, address))
