@@ -43,6 +43,7 @@ class ServerProtocol:
 
     def insertProtocol(self, msg, position, linenr):
         # olemas symbol, asukoht reas, reanumber
+        print self.text
         try:
             self.text[linenr] = self.text[linenr][:position] + msg + self.text[linenr][position:]
         except IndexError:
@@ -50,20 +51,48 @@ class ServerProtocol:
                 self.text[linenr] = msg
             except IndexError:
                 self.text += msg
+        ####TODO: line change in the middle of the line
+        #if self.text[linenr][position] == '\r':
+        #    self.text = self.text[:linenr] + list(self.text[linenr][:position+1]) + \
+        #                list(self.text[linenr][position+1:]) + self.text[linenr+1:]
+        print self.text
         # Need better return message - going to distribute these things to others - return the updated char/line
         return "inserted"
 
     def deleteProtocol(self,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
         print self.text
-        try:
-            self.text[linenr] = self.text[linenr][:position] + self.text[linenr][position+1:]
-        except IndexError:
-            print "test"
-            self.text[linenr] = self.text[linenr][:position]
+        if position == 0 and linenr != 0 and linenr != 1:
+            try:
+                self.text[linenr-1] += self.text[linenr][1:]
+                try:
+                    self.text = self.text[:linenr] + self.text[linenr+1:]
+                except IndexError:
+                    self.text = self.text[:linenr]
+            except IndexError:
+                print "On the first line"
+        ###TODO: remove this after correct line exchange places added to client
+        elif position == 0 and linenr == 0:
+            self.text[0] = self.text[0][1:]
+            print "In the beginning"
+        elif linenr == 1 and position == 0:
+            try:
+                self.text[linenr-1] += self.text[linenr]
+                try:
+                    self.text = self.text[:linenr] + self.text[linenr+1:]
+                except IndexError:
+                    self.text = self.text[:linenr]
+            except IndexError:
+                print "On the first line"
+        else:
+            try:
+                print "test1"
+                self.text[linenr] = self.text[linenr][:position] + self.text[linenr][position+1:]
+            except IndexError:
+                print "test"
+                self.text[linenr] = self.text[linenr][:position]
         print self.text
         return "deleted"
-
     def swapProtocol(self,msg,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
         self.text[linenr][position] = msg
