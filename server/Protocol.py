@@ -3,17 +3,15 @@ class ServerProtocol:
         self.text = []
 
     def handleEvent(self, eventString):
-        print(eventString)
+        #print(eventString)
+        print eventString.split('*')
         ##TODO: kuidagi peab handlima ka lockimise protokolli, toenaoliselt teiste protokollide sees
         ##TODO: naiteks newline symboli puhul vms
         try:
             protocolType = eventString.split('*')[0]
             msg = eventString.split("*")[1]
-            try:
-                position = int(eventString.split('*')[3]) - 1
-                linenr = int(eventString.split('*')[2]) - 1
-            except IndexError:
-                pass
+            position = int(eventString.split('*')[3]) - 1
+            linenr = int(eventString.split('*')[2]) - 1
         except IndexError:
             msg = eventString.split("*")[0]
             position = int(eventString.split('*')[2]) - 1
@@ -35,15 +33,26 @@ class ServerProtocol:
             return_msg = self.newProtocol(msg)
         elif protocolType == 'authent':
             self.authentProtocol()
+        else:
+            if msg == '\x08':
+                return_msg = self.deleteProtocol(position, linenr)
+            else:
+                return_msg = self.insertProtocol(msg, position, linenr)
         return return_msg
     def insertProtocol(self,msg,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
-        self.text = self.text[linenr][:position] + msg + self.text[linenr][position:]
+        try:
+            self.text = self.text[linenr][:position] + msg + self.text[linenr][position:]
+        except IndexError:
+            try:
+                self.text = self.text[linenr][:position] + msg
+            except IndexError:
+                self.text += msg
         return "inserted"
 
     def deleteProtocol(self,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
-        self.text[linenr][position].remove()
+        self.text.pop([linenr][position])
         return "deleted"
 
     def swapProtocol(self,msg,position,linenr):
