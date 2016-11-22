@@ -1,6 +1,7 @@
 import socket
 import threading
 import logging
+from argparse import ArgumentParser
 
 from Protocol import ServerProtocol
 
@@ -9,8 +10,9 @@ TCP_RECIEVE_BUFFER_SIZE = 1024*1024
 MAX_PDU_SIZE = 200*1024*1024
 # Constants
 DEFAULT_BUFFER_SIZE = 1024
-DEFAULT_PORT = 49995
-DEFAULT_HOST = 'localhost'
+
+DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
+DEFAULT_SERVER_PORT = 49995
 
 FORMAT = '%(asctime)-15s %(levelname)s %(threadName)s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=FORMAT)
@@ -18,9 +20,9 @@ LOG = logging.getLogger()
 
 
 class Server:
-    def __init__(self):
+    def __init__(self, addr, port):
         LOG.info("Server Started.")
-        self.socket = self.__socket_init(DEFAULT_HOST, DEFAULT_PORT)
+        self.socket = self.__socket_init(addr, port)
         self.editor = ServerProtocol()
         self.clients = []
         self.main_threader()
@@ -91,5 +93,18 @@ def tcp_receive(sokk):
 
 
 if __name__ == "__main__":
-    srvr = Server()
+    # Parsing arguments
+    parser = ArgumentParser()
+    parser.add_argument('-H', '--host',
+                        help='Server INET address '
+                             'defaults to %s' % DEFAULT_SERVER_INET_ADDR,
+                        default=DEFAULT_SERVER_INET_ADDR)
+    parser.add_argument('-p', '--port', type=int,
+                        help='Server TCP port, '
+                             'defaults to %d' % DEFAULT_SERVER_PORT,
+                        default=DEFAULT_SERVER_PORT)
+
+    args = parser.parse_args()
+
+    srvr = Server(args.host, args.port)
     exit(0)
