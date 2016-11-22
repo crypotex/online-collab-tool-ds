@@ -25,18 +25,18 @@ class ServerProtocol:
         msg = event[1]
         blk, col = map(int, event[2:])
         if msg == '\x08':
-            return_msg = self.deleteProtocol(blk, col)
+            return_msg = self.deleteProtocol(col, blk-1)
         else:
-            return_msg = self.insertProtocol(msg, blk, col)
+            return_msg = self.insertProtocol(msg, col-1, blk-1)
         return return_msg
 
     def insertProtocol(self, msg, position, linenr):
         # olemas symbol, asukoht reas, reanumber
         try:
-            self.text = self.text[linenr][:position] + msg + self.text[linenr][position:]
+            self.text[linenr] = self.text[linenr][:position] + msg + self.text[linenr][position:]
         except IndexError:
             try:
-                self.text = self.text[linenr][:position] + msg
+                self.text[linenr] = msg
             except IndexError:
                 self.text += msg
         # Need better return message - going to distribute these things to others - return the updated char/line
@@ -44,7 +44,13 @@ class ServerProtocol:
 
     def deleteProtocol(self,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
-        self.text.pop([linenr][position])
+        print self.text
+        try:
+            self.text[linenr] = self.text[linenr][:position] + self.text[linenr][position+1:]
+        except IndexError:
+            print "test"
+            self.text[linenr] = self.text[linenr][:position]
+        print self.text
         return "deleted"
 
     def swapProtocol(self,msg,position,linenr):
