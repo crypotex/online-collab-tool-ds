@@ -3,16 +3,16 @@ from file_io import FileHandler
 class ServerProtocol:
     def __init__(self):
         self.text = []
-        self.file = Filehandler("")
+        self.file = FileHandler("")
 
     def handleEvent(self, eventString):
         print(type(eventString))
         if eventString.startswith('k'):
             return self.handle_kbe(eventString)
         elif eventString.startswith('n'):
-            self.file = Filehandler(eventString)
+            self.file = FileHandler(eventString)
         elif eventString.startswith('o'):
-            self.file = Filehandler(eventString)
+            self.file = FileHandler(eventString)
         else:
             raise RuntimeError("No such thing")
 
