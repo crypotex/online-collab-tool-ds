@@ -4,17 +4,15 @@ import thread
 
 class Server:
     def __init__(self):
-        self.socket = self.socket_init("localhost")
+        self.socket = self.socket_init("localhost", 49999)
         self.run()
         self.text = []
 
-    def socket_init(self, server_ip):
+    def socket_init(self, server_ip, port):
         """ Socket Initialization """
-        host = server_ip
-        port = 49998
         backlog = 5
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((host, port))
+        s.bind((server_ip, port))
         s.listen(backlog)
         return s
 
@@ -26,8 +24,8 @@ class Server:
             print(accept)
             while 1:
                 msg = client.recvfrom(1024)
-                print(msg[0].split("*"))
-                client.send(msg[0].split("*")[0])
+                print(msg[0].split("*")[0]*10)
+                client.send(msg[0].split("*")[0]*10)
                 print(msg)
 
 if __name__ == "__main__":
