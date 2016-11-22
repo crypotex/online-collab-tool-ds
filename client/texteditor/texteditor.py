@@ -4,6 +4,8 @@
 
 import sys
 from PyQt4 import QtGui
+from argparse import ArgumentParser
+from socket import AF_INET, SOCK_STREAM, socket
 
 from PyQt4.Qt import QPainter
 from PyQt4.Qt import QPlainTextEdit
@@ -14,9 +16,9 @@ from PyQt4.Qt import QWidget
 from PyQt4.Qt import Qt
 from PyQt4.QtCore import QSize, SIGNAL
 from PyQt4.QtGui import QColor
-from argparse import ArgumentParser
-from socket import AF_INET, SOCK_STREAM, socket
-
+from PyQt4.QtGui import QInputDialog
+from PyQt4.QtGui import QMessageBox
+from PyQt4.QtGui import QPixmap
 
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
 DEFAULT_SERVER_PORT = 49995
@@ -118,7 +120,7 @@ class CodeEditor(QPlainTextEdit):
     def keyReleaseEvent(self, QKeyEvent):
         l = QKeyEvent.text()
         cursor_loc = self.textCursor()
-        blck_nr = cursor_loc.blockNumber() +1
+        blck_nr = cursor_loc.blockNumber() + 1
         col_nr = cursor_loc.columnNumber()
         self.sokk.send("%s*%d*%d" % (l, blck_nr, col_nr))
         msg = self.sokk.recv(1024)
@@ -129,7 +131,9 @@ class Main(QtGui.QMainWindow):
     def __init__(self, server_addr, port, parent=None):
         QtGui.QMainWindow.__init__(self, parent)
 
-        self.sokk = self.connectToServer(server_addr, port)
+        self.server_addr = server_addr
+        self.port = port
+        self.sokk = self.connectToServer(self.server_addr, self.port)
 
         self.filename = ""
 
@@ -242,9 +246,17 @@ class Main(QtGui.QMainWindow):
         self.statusbar.showMessage("Line: {} | Column: {}".format(line, col))
 
     def new(self):
-
-        spawn = Main(self)
-        spawn.show()
+        filename, ok = QInputDialog.getText(self, 'Choose file name', 'Enter file name:')
+        if str(filename).endswith('.txt') and ok:
+            self.sokk.send('%s*%s' % ('new', filename))
+        else:
+            warning = QMessageBox()
+            warning.setIconPixmap(QPixmap("icons/Error-96.png"))
+            warning.setText("The file name has to end with .txt!")
+            warning.setWindowTitle("Warning")
+            warning.setStandardButtons(QMessageBox.Ok)
+            warning.exec_()
+            # TODO: Saa serverilt vastus, kas OK v NOK
 
     def open(self):
 
@@ -276,8 +288,6 @@ class Main(QtGui.QMainWindow):
         sokk = socket(AF_INET, SOCK_STREAM)
         sokk.connect((server_addr, port))
         return sokk
-
-
 
 
 def main():
