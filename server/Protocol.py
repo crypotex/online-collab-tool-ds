@@ -18,7 +18,7 @@ class ServerProtocol:
             msg = eventString.split("*")[0]
             position = int(eventString.split('*')[2]) - 1
             linenr = int(eventString.split('*')[1]) - 1
-            
+
         if protocolType == 'insert':
             self.insertProtocol(msg,position,linenr)
         elif protocolType == 'delete':
@@ -60,11 +60,13 @@ class ServerProtocol:
     def lockProtocol(self):
         return "locked"
 
-    def openProtocol(self):
+    def openProtocol(self,filename):
         return "opened file"
 
     def newProtocol(self,filename):
-
+        f = open(filename, 'w')
+        ##save file with filename to dump directory
+        self.openProtocol(filename)
         return "new file created"
 
     def authentProtocol(self):
