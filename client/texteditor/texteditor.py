@@ -15,6 +15,12 @@ from PyQt4.Qt import Qt
 from PyQt4.QtCore import QSize, SIGNAL
 from PyQt4.QtGui import QColor
 from PyQt4.QtNetwork import QTcpSocket
+from argparse import ArgumentParser
+
+
+DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
+DEFAULT_SERVER_PORT = 49998
+
 
 class LineNumberArea(QWidget):
     def __init__(self, editor):
@@ -119,11 +125,11 @@ class CodeEditor(QPlainTextEdit):
         print(msg)
 
 class Main(QtGui.QMainWindow):
-    def __init__(self, parent=None):
-        self.clientSocket = QTcpSocket()
-        self.connectToServer()
-
+    def __init__(self, server_addr, port, parent=None):
         QtGui.QMainWindow.__init__(self, parent)
+
+        self.clientSocket = QTcpSocket()
+        self.connectToServer(server_addr, port)
 
         self.filename = ""
 
@@ -265,17 +271,28 @@ class Main(QtGui.QMainWindow):
             save_file.write(self.text.toPlainText())
 
     # Create connection to server
-    def connectToServer(self):
+    def connectToServer(self, server_addr, port):
         print("Connecting to server")
-        self.clientSocket.connectToHost("localhost", 49998)
-        self.clientSocket.waitForConnected(-1) # Might use a better timeout here ...
+        self.clientSocket.connectToHost(server_addr, port)
+        self.clientSocket.waitForConnected(-1)  # Might use a better timeout here ...
 
 
 
 def main():
-    app = QtGui.QApplication(sys.argv)
+    # Parsing arguments
+    parser = ArgumentParser()
+    parser.add_argument('-H', '--host',
+                        help='Server INET address '
+                             'defaults to %s' % DEFAULT_SERVER_INET_ADDR,
+                        default=DEFAULT_SERVER_INET_ADDR)
+    parser.add_argument('-p', '--port', type=int,
+                        help='Server UDP port, '
+                             'defaults to %d' % DEFAULT_SERVER_PORT,
+                        default=DEFAULT_SERVER_PORT)
 
-    main = Main()
+    args = parser.parse_args()
+    app = QtGui.QApplication(sys.argv)
+    main = Main(args.host, args.port)
     main.show()
 
     sys.exit(app.exec_())
