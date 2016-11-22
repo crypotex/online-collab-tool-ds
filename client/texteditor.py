@@ -284,7 +284,7 @@ class Main(QtGui.QMainWindow):
             if fileslist:
                 self.dialogForFiles(fileslist)
 
-        # TODO: Serverilt saab vastuse, kui fail olemas, aga lugemine ja n2itamine aknas puudu
+                # TODO: Serverilt saab vastuse, kui fail olemas, aga lugemine ja n2itamine aknas puudu
 
     def save(self):
 
@@ -338,6 +338,14 @@ class Main(QtGui.QMainWindow):
         else:
             print("File with such name does not exist.")
 
+    def closeEvent(self, event):
+        reply = QtGui.QMessageBox.question(self, 'Confirm exit', "Are you sure you want to exit?",
+                                           QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+
+        if reply == QtGui.QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
 
 
 def main():
