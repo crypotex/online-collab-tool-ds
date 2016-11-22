@@ -122,7 +122,8 @@ class CodeEditor(QPlainTextEdit):
         col_nr = cursor_loc.columnNumber()
         self.sokk.send("%s*%d*%d" % (l, blck_nr, col_nr))
         msg = self.sokk.recv(1024)
-        print(msg)
+        self.insertPlainText(msg)
+
 
 class Main(QtGui.QMainWindow):
     def __init__(self, server_addr, port, parent=None):
