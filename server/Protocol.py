@@ -7,6 +7,9 @@ class ServerProtocol:
         ##TODO: kuidagi peab handlima ka lockimise protokolli, toenaoliselt teiste protokollide sees
         ##TODO: naiteks newline symboli puhul vms
         protocolType = eventString.split('*')[1]
+        msg = eventString.split("*")[1]
+        position = int(eventString.split('*')[3]) - 1
+        linenr = int(eventString.split('*')[2]) - 1
         if protocolType == 'insert':
             self.insertProtocol()
         elif protocolType == 'delete':
@@ -23,34 +26,36 @@ class ServerProtocol:
             self.newProtocol()
         elif protocolType == 'authent':
             self.authentProtocol()
-        msg = eventString.split("*")[1]
         return msg
-    def insertProtocol(self,msg):
+    def insertProtocol(self,msg,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
-        return None
+        self.text = self.text[linenr][:position] + msg + self.text[linenr][position:]
+        return "inserted"
 
-    def deleteProtocol(self):
+    def deleteProtocol(self,msg,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
-        return None
+        self.text[linenr][position].remove()
+        return "deleted"
 
-    def swapProtocol(self):
+    def swapProtocol(self,msg,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
-        return None
+        self.text[linenr][position] = msg
+        return "swapped"
 
     def undoProtocol(self):
-        return None
+        return "undone"
 
     def redoProtocol(self):
-        return None
+        return "redone"
 
     def lockProtocol(self):
-        return None
+        return "locked"
 
     def openProtocol(self):
-        return None
+        return "opened file"
 
     def newProtocol(self):
-        return None
+        return "new text created"
 
     def authentProtocol(self):
-        return None
+        return "authenticated"
