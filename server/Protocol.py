@@ -1,15 +1,18 @@
+from file_io import FileHandler
+
 class ServerProtocol:
     def __init__(self):
         self.text = []
+        self.file = Filehandler("")
 
     def handleEvent(self, eventString):
         print(type(eventString))
         if eventString.startswith('k'):
             return self.handle_kbe(eventString)
         elif eventString.startswith('n'):
-            return self.newProtocol(eventString)
+            self.file = Filehandler(eventString)
         elif eventString.startswith('o'):
-            return self.openProtocol(eventString)
+            self.file = Filehandler(eventString)
         else:
             raise RuntimeError("No such thing")
 
@@ -56,15 +59,6 @@ class ServerProtocol:
 
     def lockProtocol(self):
         return "locked"
-
-    def openProtocol(self,filename):
-        return "opened file"
-
-    def newProtocol(self,filename):
-        f = open(filename, 'w')
-        ##save file with filename to dump directory
-        self.openProtocol(filename)
-        return "new file created"
 
     def authentProtocol(self):
         return "authenticated"
