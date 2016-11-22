@@ -18,7 +18,7 @@ class ServerProtocol:
             msg = eventString.split("*")[0]
             position = int(eventString.split('*')[2]) - 1
             linenr = int(eventString.split('*')[1]) - 1
-
+        return_msg = ''
         if protocolType == 'insert':
             return_msg = self.insertProtocol(msg,position,linenr)
         elif protocolType == 'delete':
