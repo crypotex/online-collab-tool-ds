@@ -20,12 +20,13 @@ LOG = logging.getLogger()
 class Server:
     def __init__(self):
         LOG.info("Server Started.")
-        self.socket = self.socket_init(DEFAULT_HOST, DEFAULT_PORT)
+        self.socket = self.__socket_init(DEFAULT_HOST, DEFAULT_PORT)
         self.editor = ServerProtocol()
         self.clients = []
-        self.mainThreader()
+        self.main_threader()
 
-    def socket_init(self, server_ip, port):
+    @staticmethod
+    def __socket_init(server_ip, port):
         """ Socket Initialization """
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -36,13 +37,13 @@ class Server:
         LOG.info("Socket initialized")
         return s
 
-    def mainThreader(self):
+    def main_threader(self):
         self.socket.listen(5)
         while True:
             try:
                 client, address = self.socket.accept()
                 client.settimeout(7200)
-                threading.Thread(target = self.runClientThread, args=(client, address)).start()
+                threading.Thread(target=self.run_client_thread, args=(client, address)).start()
                 self.clients.append((client, address))
                 LOG.info("Current Clients: %s" % str(self.clients))
             except KeyboardInterrupt:
@@ -50,7 +51,7 @@ class Server:
                 break
         self.socket.close()
 
-    def runClientThread(self, client, address):
+    def run_client_thread(self, client, address):
         LOG.info("New thread initialized with :%s and %s" % (str(client), address))
         while True:
             try:
