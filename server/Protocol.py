@@ -9,11 +9,11 @@ class ServerProtocol:
         if eventString.startswith('k'):
             return self.handle_kbe(eventString)
         elif eventString.startswith('n'):
-            self.file.new_file(eventString[2:])
+            return self.file.new_file(eventString[2:])
         elif eventString.startswith('o'):
-            self.file.open_file(eventString[2:])
+            return self.file.open_file(eventString[2:])
         elif eventString.startswith('l'):
-            self.file.list_files()
+            return self.file.list_files()
         else:
             raise RuntimeError("No such thing")
 
