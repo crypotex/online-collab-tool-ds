@@ -19,7 +19,7 @@ from socket import AF_INET, SOCK_STREAM, socket
 
 
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
-DEFAULT_SERVER_PORT = 49999
+DEFAULT_SERVER_PORT = 49995
 
 
 class LineNumberArea(QWidget):

@@ -1,12 +1,11 @@
 import socket
-import sys
-import thread
+from Protocol import ServerProtocol
 
 class Server:
     def __init__(self):
-        self.socket = self.socket_init("localhost", 49999)
+        self.socket = self.socket_init("localhost", 49995)
+        self.editor = ServerProtocol()
         self.run()
-        self.text = []
 
     def socket_init(self, server_ip, port):
         """ Socket Initialization """
@@ -23,9 +22,9 @@ class Server:
             print(client)
             print(accept)
             while 1:
-                msg = client.recvfrom(1024)
-                print(msg[0].split("*")[0]*10)
-                client.send(msg[0].split("*")[0]*10)
+                msg, whaa = client.recvfrom(1024)
+                response = self.editor.handleEvent(msg)
+                client.send(response)
                 print(msg)
 
 if __name__ == "__main__":
