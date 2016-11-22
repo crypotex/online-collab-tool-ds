@@ -1,3 +1,5 @@
+import sys
+sys.path.append('..')
 import socket
 from Protocol import ServerProtocol
 from common import DEFAULT_HOST, DEFAULT_PORT, tcp_recieve, tcp_send
