@@ -22,9 +22,9 @@ class FileHandler:
     def open_file(self, fstring):
         fs = "%s/%s" % (self.dump_dir, fstring)
         if exists(fs):
-            return "File with such name already exists", None
-        else:
             self.fname = fs
+        else:
+            return "File with such name does not exist", None
         txt = []
         try:
             with open(self.fname, "r") as f:
