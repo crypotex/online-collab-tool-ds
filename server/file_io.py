@@ -1,4 +1,6 @@
-from os.path import exists, listdir
+from os import listdir
+from os.path import exists
+
 
 class FileHandler:
     dump_dir = 'dump'
