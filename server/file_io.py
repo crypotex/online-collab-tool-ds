@@ -25,7 +25,7 @@ class FileHandler:
             return "0"
 
     def list_files(self):
-        return str(listdir(self.dump))
+        return str(listdir(self.dump_dir))
 
     def open_file(self, filestring):
         fs = "%s/%s" % (self.dump_dir, filestring)
