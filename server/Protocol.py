@@ -9,13 +9,24 @@ class ServerProtocol:
         if eventString.startswith('k'):
             return self.handle_kbe(eventString)
         elif eventString.startswith('n'):
-            return self.file.new_file(eventString[2:])
+            msg, txt = self.file.new_file(eventString[2:])
+            if msg == "OK":
+                self.text = txt
+            # TODO: CREATE NEW FILE IN CLIENT
+            return msg
         elif eventString.startswith('o'):
-            return self.file.open_file(eventString[2:])
+            msg, txt = self.file.open_file(eventString[2:])
+            if msg == "OK":
+                self.text = txt
+            # TODO: RETURN WHOLE TEXT
+            return msg
         elif eventString.startswith('l'):
             return self.file.list_files()
         else:
             raise RuntimeError("No such thing")
+
+    def save_text(self):
+        self.file.save(self.text)
 
         ##TODO: kuidagi peab handlima ka lockimise protokolli, toenaoliselt teiste protokollide sees
         ##TODO: naiteks newline symboli puhul vms

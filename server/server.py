@@ -49,6 +49,7 @@ class Server:
             except KeyboardInterrupt:
                 LOG.exception('Ctrl+C - terminating server')
                 break
+        self.editor.save_text()
         self.socket.close()
 
     def run_client_thread(self, client, address):
@@ -66,7 +67,7 @@ class Server:
             except socket.error as e:
                 LOG.error("Some error: %s" % (str(e)))
                 break
-
+        self.editor.save_text()
         if client is not None:
             try:
                 client.close()
