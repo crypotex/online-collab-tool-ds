@@ -3,44 +3,29 @@ class ServerProtocol:
         self.text = []
 
     def handleEvent(self, eventString):
-        #print(eventString)
-        print eventString.split('*')
+        print(type(eventString))
+        if eventString.startswith('n'):
+            return self.handle_kbe(eventString)
+        elif eventString.startswith('n'):
+            return self.newProtocol()
+        else:
+            raise RuntimeError("No such thing")
+
         ##TODO: kuidagi peab handlima ka lockimise protokolli, toenaoliselt teiste protokollide sees
         ##TODO: naiteks newline symboli puhul vms
-        try:
-            protocolType = eventString.split('*')[0]
-            msg = eventString.split("*")[1]
-            position = int(eventString.split('*')[3]) - 1
-            linenr = int(eventString.split('*')[2]) - 1
-        except IndexError:
-            msg = eventString.split("*")[0]
-            position = int(eventString.split('*')[2]) - 1
-            linenr = int(eventString.split('*')[1]) - 1
-        return_msg = ''
-        if protocolType == 'insert':
-            return_msg = self.insertProtocol(msg,position,linenr)
-        elif protocolType == 'delete':
-            return_msg = self.deleteProtocol(position,linenr)
-        elif protocolType == 'swap':
-            return_msg = self.swapProtocol(msg,position,linenr)
-        elif protocolType == 'undo':
-            self.undoProtocol()
-        elif protocolType == 'redo':
-            self.redoProtocol()
-        elif protocolType == 'open':
-            self.openProtocol()
-        elif protocolType == 'new':
-            return_msg = self.newProtocol(msg)
-        elif protocolType == 'authent':
-            self.authentProtocol()
+
+    def handle_kbe(self, eventString):
+        event = eventString.split('*')
+        msg = event[1]
+        blk, col = map(int, event[2:])
+        if msg == '\x08':
+            return_msg = self.deleteProtocol(blk, col)
         else:
-            if msg == '\x08':
-                return_msg = self.deleteProtocol(position, linenr)
-            else:
-                return_msg = self.insertProtocol(msg, position, linenr)
+            return_msg = self.insertProtocol(msg, blk, col)
         return return_msg
-    def insertProtocol(self,msg,position,linenr):
-        ##olemas symbol, asukoht reas, reanumber
+
+    def insertProtocol(self, msg, position, linenr):
+        # olemas symbol, asukoht reas, reanumber
         try:
             self.text = self.text[linenr][:position] + msg + self.text[linenr][position:]
         except IndexError:
@@ -48,6 +33,7 @@ class ServerProtocol:
                 self.text = self.text[linenr][:position] + msg
             except IndexError:
                 self.text += msg
+        # Need better return message - going to distribute these things to others - return the updated char/line
         return "inserted"
 
     def deleteProtocol(self,position,linenr):
