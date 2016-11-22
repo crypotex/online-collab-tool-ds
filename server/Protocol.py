@@ -6,16 +6,25 @@ class ServerProtocol:
         print(eventString)
         ##TODO: kuidagi peab handlima ka lockimise protokolli, toenaoliselt teiste protokollide sees
         ##TODO: naiteks newline symboli puhul vms
-        protocolType = eventString.split('*')[1]
-        msg = eventString.split("*")[1]
-        position = int(eventString.split('*')[3]) - 1
-        linenr = int(eventString.split('*')[2]) - 1
+        try:
+            protocolType = eventString.split('*')[0]
+            msg = eventString.split("*")[1]
+            try:
+                position = int(eventString.split('*')[3]) - 1
+                linenr = int(eventString.split('*')[2]) - 1
+            except IndexError:
+                pass
+        except IndexError:
+            msg = eventString.split("*")[0]
+            position = int(eventString.split('*')[2]) - 1
+            linenr = int(eventString.split('*')[1]) - 1
+            
         if protocolType == 'insert':
-            self.insertProtocol()
+            self.insertProtocol(msg,position,linenr)
         elif protocolType == 'delete':
-            self.deleteProtocol()
+            self.deleteProtocol(position,linenr)
         elif protocolType == 'swap':
-            self.swapProtocol()
+            self.swapProtocol(msg,position,linenr)
         elif protocolType == 'undo':
             self.undoProtocol()
         elif protocolType == 'redo':
@@ -32,7 +41,7 @@ class ServerProtocol:
         self.text = self.text[linenr][:position] + msg + self.text[linenr][position:]
         return "inserted"
 
-    def deleteProtocol(self,msg,position,linenr):
+    def deleteProtocol(self,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
         self.text[linenr][position].remove()
         return "deleted"
@@ -54,8 +63,9 @@ class ServerProtocol:
     def openProtocol(self):
         return "opened file"
 
-    def newProtocol(self):
-        return "new text created"
+    def newProtocol(self,filename):
+
+        return "new file created"
 
     def authentProtocol(self):
         return "authenticated"
