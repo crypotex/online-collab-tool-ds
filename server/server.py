@@ -34,12 +34,14 @@ class Server:
             try:
                 client, source = self.socket.accept()
                 print("Incoming connection: %s - %s" % (client, source))
-                try:
-                    msg = tcp_receive(client)
-                    response = self.editor.handleEvent(msg)
-                    client.sendall(response)
-                except socket.error as e:
-                    print("Some error: %s" % (str(e)))
+                while True:
+                    try:
+                        msg = client.recv(DEFAULT_BUFFER_SIZE)
+                        response = self.editor.handleEvent(msg)
+                        print(response)
+                        client.send(response)
+                    except socket.error as e:
+                        print("Some error: %s" % (str(e)))
 
             except KeyboardInterrupt:
                 print('Ctrl+C - terminating server')
@@ -67,6 +69,7 @@ def tcp_send(sokk, data):
     return len(data)
 
 
+#Use only if working with some blocks of data
 def tcp_receive(sokk):
     msg = ''
     while 1:
