@@ -4,8 +4,8 @@ class ServerProtocol:
 
     def handleEvent(self, eventString):
         print(eventString)
-        ##TODO: kuidagi peab handlima ka lockimise protokolli, tõenäoliselt teiste protokollide sees
-        ##TODO: näiteks newline sümboli puhul vms
+        ##TODO: kuidagi peab handlima ka lockimise protokolli, toenaoliselt teiste protokollide sees
+        ##TODO: naiteks newline symboli puhul vms
         protocolType = eventString.split('*')[1]
         if protocolType == 'insert':
             self.insertProtocol()
@@ -25,16 +25,16 @@ class ServerProtocol:
             self.authentProtocol()
         msg = eventString.split("*")[1]
         return msg
-    def insertProtocol(self):
-        ##olemas sümbol, asukoht reas, reanumber
+    def insertProtocol(self,msg):
+        ##olemas symbol, asukoht reas, reanumber
         return None
 
     def deleteProtocol(self):
-        ##olemas sümbol, asukoht reas, reanumber
+        ##olemas symbol, asukoht reas, reanumber
         return None
 
     def swapProtocol(self):
-        ##olemas sümbol, asukoht reas, reanumber
+        ##olemas symbol, asukoht reas, reanumber
         return None
 
     def undoProtocol(self):
