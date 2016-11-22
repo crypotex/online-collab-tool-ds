@@ -4,10 +4,12 @@ class ServerProtocol:
 
     def handleEvent(self, eventString):
         print(type(eventString))
-        if eventString.startswith('n'):
+        if eventString.startswith('k'):
             return self.handle_kbe(eventString)
         elif eventString.startswith('n'):
-            return self.newProtocol()
+            return self.newProtocol(eventString)
+        elif eventString.startswith('o'):
+            return self.openProtocol(eventString)
         else:
             raise RuntimeError("No such thing")
 
