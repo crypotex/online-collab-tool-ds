@@ -122,7 +122,7 @@ class CodeEditor(QPlainTextEdit):
         cursor_loc = self.textCursor()
         blck_nr = cursor_loc.blockNumber() + 1
         col_nr = cursor_loc.columnNumber()
-        self.sokk.send("%s*%d*%d" % (l, blck_nr, col_nr))
+        self.sokk.send("%s*%s*%d*%d" % ("k", l, blck_nr, col_nr))
         msg = self.sokk.recv(1024)
         print("GODRESPONSE. GOD: %s" % msg)
 
@@ -248,7 +248,7 @@ class Main(QtGui.QMainWindow):
     def new(self):
         filename, ok = QInputDialog.getText(self, 'Choose file name', 'Enter file name:')
         if str(filename).endswith('.txt') and ok:
-            self.sokk.send('%s*%s' % ('new', filename))
+            self.sokk.send('%s*%s' % ('n', filename))
         else:
             warning = QMessageBox()
             warning.setIconPixmap(QPixmap("icons/Error-96.png"))
