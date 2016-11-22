@@ -20,11 +20,11 @@ class ServerProtocol:
             linenr = int(eventString.split('*')[1]) - 1
 
         if protocolType == 'insert':
-            self.insertProtocol(msg,position,linenr)
+            return_msg = self.insertProtocol(msg,position,linenr)
         elif protocolType == 'delete':
-            self.deleteProtocol(position,linenr)
+            return_msg = self.deleteProtocol(position,linenr)
         elif protocolType == 'swap':
-            self.swapProtocol(msg,position,linenr)
+            return_msg = self.swapProtocol(msg,position,linenr)
         elif protocolType == 'undo':
             self.undoProtocol()
         elif protocolType == 'redo':
@@ -32,10 +32,10 @@ class ServerProtocol:
         elif protocolType == 'open':
             self.openProtocol()
         elif protocolType == 'new':
-            self.newProtocol()
+            return_msg = self.newProtocol(msg)
         elif protocolType == 'authent':
             self.authentProtocol()
-        return msg
+        return return_msg
     def insertProtocol(self,msg,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
         self.text = self.text[linenr][:position] + msg + self.text[linenr][position:]
