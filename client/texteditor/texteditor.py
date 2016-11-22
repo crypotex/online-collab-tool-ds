@@ -14,12 +14,12 @@ from PyQt4.Qt import QWidget
 from PyQt4.Qt import Qt
 from PyQt4.QtCore import QSize, SIGNAL
 from PyQt4.QtGui import QColor
-from PyQt4.QtNetwork import QTcpSocket
 from argparse import ArgumentParser
+from socket import AF_INET, SOCK_STREAM, socket
 
 
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
-DEFAULT_SERVER_PORT = 49998
+DEFAULT_SERVER_PORT = 49995
 
 
 class LineNumberArea(QWidget):
@@ -120,16 +120,15 @@ class CodeEditor(QPlainTextEdit):
         cursor_loc = self.textCursor()
         blck_nr = cursor_loc.blockNumber() +1
         col_nr = cursor_loc.columnNumber()
-        self.sokk.writeData("%s*%d*%d" % (l, blck_nr, col_nr))
-        msg = self.sokk.readData(1024)
+        self.sokk.send("%s*%d*%d" % (l, blck_nr, col_nr))
+        msg = self.sokk.recv(1024)
         print(msg)
 
 class Main(QtGui.QMainWindow):
     def __init__(self, server_addr, port, parent=None):
         QtGui.QMainWindow.__init__(self, parent)
 
-        self.clientSocket = QTcpSocket()
-        self.connectToServer(server_addr, port)
+        self.sokk = self.connectToServer(server_addr, port)
 
         self.filename = ""
 
@@ -212,7 +211,7 @@ class Main(QtGui.QMainWindow):
         # edit.addAction(self.pasteAction)
 
     def init_ui(self):
-        self.text = CodeEditor(self.clientSocket)
+        self.text = CodeEditor(self.sokk)
         self.setCentralWidget(self.text)
 
         self.init_toolbar()
@@ -273,8 +272,10 @@ class Main(QtGui.QMainWindow):
     # Create connection to server
     def connectToServer(self, server_addr, port):
         print("Connecting to server")
-        self.clientSocket.connectToHost(server_addr, port)
-        self.clientSocket.waitForConnected(-1)  # Might use a better timeout here ...
+        sokk = socket(AF_INET, SOCK_STREAM)
+        sokk.connect((server_addr, port))
+        return sokk
+
 
 
 
@@ -286,7 +287,7 @@ def main():
                              'defaults to %s' % DEFAULT_SERVER_INET_ADDR,
                         default=DEFAULT_SERVER_INET_ADDR)
     parser.add_argument('-p', '--port', type=int,
-                        help='Server UDP port, '
+                        help='Server TCP port, '
                              'defaults to %d' % DEFAULT_SERVER_PORT,
                         default=DEFAULT_SERVER_PORT)
 
