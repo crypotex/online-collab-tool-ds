@@ -37,6 +37,7 @@ class Server:
                 client.settimeout(7200)
                 threading.Thread(target = self.runClientThread, args=(client, address)).start()
                 self.clients.append((client,address))
+                print(self.clients)
             except KeyboardInterrupt as kbe:
                 print('Ctrl+C - terminating server')
                 break
@@ -47,9 +48,11 @@ class Server:
         while True:
             try:
                 msg = client.recv(DEFAULT_BUFFER_SIZE)
+                print("Recieved message: %s. Wwaiting for response." % msg)
                 response = self.editor.handleEvent(msg)
-                print(response)
+                print("GODRESPONSE. Sending: %s." % response)
                 client.send(response)
+                print("SENTRESPO")
             except socket.error as e:
                 print("Some error: %s" % (str(e)))
                 break
