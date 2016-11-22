@@ -1,4 +1,6 @@
 import socket
+import threading
+
 from Protocol import ServerProtocol
 
 
@@ -14,37 +16,42 @@ class Server:
     def __init__(self):
         self.socket = self.socket_init(DEFAULT_HOST, DEFAULT_PORT)
         self.editor = ServerProtocol()
-        self.run()
+        self.clients = []
+        self.mainThreader()
 
     def socket_init(self, server_ip, port):
         """ Socket Initialization """
-        backlog = 5
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.bind((server_ip, port))
-            s.listen(backlog)
         except socket.error as e:
             print("Socket error: %s" % str(e))
             exit(1)
         return s
 
-    def run(self):
-        client = None
-        while 1:
+    def mainThreader(self):
+        self.socket.listen(5)
+        while True:
             try:
-                client, source = self.socket.accept()
-                print("Incoming connection: %s - %s" % (client, source))
-                while True:
-                    try:
-                        msg = client.recv(DEFAULT_BUFFER_SIZE)
-                        response = self.editor.handleEvent(msg)
-                        print(response)
-                        client.send(response)
-                    except socket.error as e:
-                        print("Some error: %s" % (str(e)))
-
-            except KeyboardInterrupt:
+                client, address = self.socket.accept()
+                client.settimeout(7200)
+                threading.Thread(target = self.runClientThread, args=(client, address)).start()
+                self.clients.append((client,address))
+            except KeyboardInterrupt as kbe:
                 print('Ctrl+C - terminating server')
+                break
+        self.socket.close()
+
+    def runClientThread(self, client, address):
+        print("New thread initialized with :%s and %s" % (client, address))
+        while True:
+            try:
+                msg = client.recv(DEFAULT_BUFFER_SIZE)
+                response = self.editor.handleEvent(msg)
+                print(response)
+                client.send(response)
+            except socket.error as e:
+                print("Some error: %s" % (str(e)))
                 break
 
         if client is not None:
@@ -53,8 +60,6 @@ class Server:
             except socket.error:
                 print('Client disconnected')
 
-        self.socket.close()
-        print('Server socket closed.')
 
 
 def tcp_send(sokk, data):
