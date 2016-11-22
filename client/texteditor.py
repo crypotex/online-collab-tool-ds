@@ -3,6 +3,9 @@
 # https://stackoverflow.com/questions/40386194/create-text-area-textedit-with-line-number-in-pyqt-5
 
 import sys
+
+import logging
+
 from PyQt4 import QtGui
 from argparse import ArgumentParser
 from socket import AF_INET, SOCK_STREAM, socket
@@ -26,6 +29,10 @@ from PyQt4.QtGui import QVBoxLayout
 
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
 DEFAULT_SERVER_PORT = 49995
+
+FORMAT = '%(asctime)-15s %(levelname)s %(threadName)s %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=FORMAT)
+LOG = logging.getLogger()
 
 
 class LineNumberArea(QWidget):
@@ -134,6 +141,8 @@ class CodeEditor(QPlainTextEdit):
 class Main(QtGui.QMainWindow):
     def __init__(self, server_addr, port, parent=None):
         QtGui.QMainWindow.__init__(self, parent)
+
+        LOG.info("Client started. ")
 
         self.server_addr = server_addr
         self.port = port
@@ -253,7 +262,9 @@ class Main(QtGui.QMainWindow):
         filename, ok = QInputDialog.getText(self, 'Choose file name', 'Enter file name:')
         if str(filename).endswith('.txt') and ok:
             self.sokk.sendall('%s*%s' % ('n', filename))
+            LOG.debug("Sent filename %s to server %s to be created" % (filename, self.sokk.getpeername()))
         else:
+            LOG.debug("Filename %s doesn't end with .txt" % filename)
             warning = QMessageBox()
             warning.setIconPixmap(QPixmap("icons/Error-96.png"))
             warning.setText("The file name has to end with .txt!")
@@ -266,6 +277,8 @@ class Main(QtGui.QMainWindow):
         self.sokk.sendall('%s*' % 'l')
 
         response = self.sokk.recv(1024)
+        LOG.debug("Received filenames %s from server %s" % (response, self.sokk.getpeername()))
+
         if response:
             fileslist = eval(response)
             if fileslist:
@@ -290,9 +303,9 @@ class Main(QtGui.QMainWindow):
 
     # Create connection to server
     def connectToServer(self, server_addr, port):
-        print("Connecting to server")
         sokk = socket(AF_INET, SOCK_STREAM)
         sokk.connect((server_addr, port))
+        LOG.info("Connected to server: %s" % ((server_addr, port),))
         return sokk
 
     # Opens a dialog which shows the files in server and where client can choose the file to be opened
@@ -319,6 +332,7 @@ class Main(QtGui.QMainWindow):
     # Sends the filename to server for open and closes the dialog box
     def clickHandler(self, txt, dialog):
         self.sokk.sendall('o*' + txt)
+        LOG.debug("Sent filename %s to server %s to be opened" % (txt, self.sokk.getpeername()))
         if self.sokk.recv(1024).split("*")[0] == "OK":
             dialog.hide()
         else:
