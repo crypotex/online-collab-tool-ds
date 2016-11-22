@@ -12,6 +12,8 @@ class ServerProtocol:
             self.file.new_file(eventString[2:])
         elif eventString.startswith('o'):
             self.file.open_file(eventString[2:])
+        elif eventString.startswith('l'):
+            self.file.list_files()
         else:
             raise RuntimeError("No such thing")
 
