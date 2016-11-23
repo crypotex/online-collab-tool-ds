@@ -78,8 +78,8 @@ class Server:
                     client.send(response)
                     LOG.debug("Response GODSent.")
                 elif type == 'a':
-                    for o_client in self.clients:
-                        if o_client != client:
+                    for client_address in self.clients:
+                        if client_address != address:
                             LOG.debug("Broadcast response to all except source. Client: %s, with message: %s."
                                       % (o_client, response))
                             self.clients[o_client].send(response)
