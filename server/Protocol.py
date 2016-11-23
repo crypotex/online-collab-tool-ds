@@ -7,14 +7,14 @@ class ServerProtocol:
 
     def handleEvent(self, eventString):
         if eventString.startswith('k'):
-            return self.handle_kbe(eventString)
+            return 'b', self.handle_kbe(eventString)
         elif eventString.startswith('n'):
             if len(self.text) > 0:
                 self.file.save(self.text)
             msg, txt = self.file.new_file(eventString[2:])
             if msg == "OK":
                 self.text = txt
-            return msg
+            return 'b', msg
         elif eventString.startswith('o'):
             if len(self.text) > 0:
                 self.file.save(self.text)
@@ -22,9 +22,9 @@ class ServerProtocol:
             msg, txt = self.file.open_file(fname)
             if msg == "OK":
                 self.text = txt
-            return "%s*%s" % (msg, self.text)
+            return 'b', "%s*%s" % (msg, self.text)
         elif eventString.startswith('l'):
-            return "OK*" + self.file.list_files()
+            return 's', "%s*%s" % ("OK", self.file.list_files())
         else:
             raise RuntimeError("No such thing")
 

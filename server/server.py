@@ -68,11 +68,17 @@ class Server:
                 if len(msg) == 0:
                     break
                 LOG.debug("Recieved message from client %s. Message was: %s." % (address, msg))
-                response = self.editor.handleEvent(msg)
-                LOG.debug("Sending response: %s to client %s." % (response, address))
-                for o_client in self.clients:
-                    self.clients[o_client].send(response)
-                LOG.debug("Response GODSENT.")
+                type, response = self.editor.handleEvent(msg)
+                LOG.debug("Sending response: %s to client %s. Type is: %s." % (response, address, type))
+                if type == 'b':
+                    for o_client in self.clients:
+                        self.clients[o_client].send(response)
+                    LOG.debug("Response GOD Broadcasted.")
+                elif type == 's':
+                    client.send(response)
+                    LOG.debug("Response GODSent.")
+                else:
+                    LOG.debug("No such time. Something definately wrong. Type: %s and Response: %s." % (type, response))
             except socket.error as e:
                 LOG.error("Socket error: %s" % (str(e)))
                 break
