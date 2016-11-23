@@ -141,11 +141,6 @@ class Main(QtGui.QMainWindow):
 
         self.statusbar.showMessage("Line: {} | Column: {}".format(line, col))
 
-    def handle_request(self):
-        response = self.sock.recv(1024).split('*')
-        if response[0] == 'a':
-            LOG.debug("Received response from server")
-
     def new(self):
         filename, ok = QInputDialog.getText(self, 'Choose file name', 'Enter file name:')
         if str(filename).endswith('.txt') and ok:
@@ -238,22 +233,36 @@ class Main(QtGui.QMainWindow):
             self.text.setDisabled(False)
             LOG.info("Window activated for editing")
             dialog.hide()
-            # self.updateText()
+            self.handle_request()
         else:
             LOG.warning("File with such name does not exist.")
+
+    def handle_request(self):
+        response = self.sock.recv(1024).split('*')
+        while True:
+            if response[0] == 'a':
+                LOG.debug("Received response from server")
+                self.update_text()
+                response = self.sock.recv(1024).split('*')
+            elif response[0] == 'OK' and len(response[1]) == 0:
+                self.new()
+            elif response[0] == 'OK' and len(response[1]) > 0:
+                self.open()
+            else:
+                print("Whyyyy???")
+
 
     def update_text(self):
         # algus = self.text.cursor()
         cursor = self.text.textCursor()
-        response = self.sock.recv(1024).split('*')
-        while response[0] == 'a':
-            block_nr = cursor.blockNumber() + 1
-            col_nr = cursor.columnNumber()
-            self.text.moveCursor(2, 2)
-            self.text.insertPlainText("tere")
-            self.text.moveCursor(block_nr, col_nr)
-            response = self.sock.recv(1024).split('*')
-            # self.text.moveCursor(algus)
+        block_nr = cursor.blockNumber() + 1
+        col_nr = cursor.columnNumber()
+        LOG.debug("Line: %d, column: %d" % (block_nr, col_nr))
+        self.text.moveCursor(2, 2)
+        LOG.debug("New! Line: %d, column: %d" % (cursor.blockNumber(), cursor.columnNumber()))
+        self.text.insertPlainText("tere")
+        self.text.moveCursor(block_nr, col_nr)
+
 
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Confirm exit', "Are you sure you want to exit?",
