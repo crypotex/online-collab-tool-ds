@@ -133,7 +133,7 @@ class CodeEditor(QPlainTextEdit):
         cursor_loc = self.textCursor()
         blck_nr = cursor_loc.blockNumber() + 1
         col_nr = cursor_loc.columnNumber()
-        self.sokk.send("%s*%s*%d*%d" % ("k", l, blck_nr, col_nr))
+        self.sokk.sendall("%s*%s*%d*%d" % ("k", l, blck_nr, col_nr))
         msg = self.sokk.recv(1024)
         print("GODRESPONSE. GOD: %s" % msg)
 
@@ -176,21 +176,6 @@ class Main(QtGui.QMainWindow):
 
         self.toolbar.addSeparator()
 
-        # self.cutAction = QtGui.QAction(QtGui.QIcon("icons/cut.png"), "Cut to clipboard", self)
-        # self.cutAction.setStatusTip("Delete and copy text to clipboard")
-        # self.cutAction.setShortcut("Ctrl+X")
-        # self.cutAction.triggered.connect(self.text.cut)
-        #
-        # self.copyAction = QtGui.QAction(QtGui.QIcon("icons/copy.png"), "Copy to clipboard", self)
-        # self.copyAction.setStatusTip("Copy text to clipboard")
-        # self.copyAction.setShortcut("Ctrl+C")
-        # self.copyAction.triggered.connect(self.text.copy)
-        #
-        # self.pasteAction = QtGui.QAction(QtGui.QIcon("icons/paste.png"), "Paste from clipboard", self)
-        # self.pasteAction.setStatusTip("Paste text from clipboard")
-        # self.pasteAction.setShortcut("Ctrl+V")
-        # self.pasteAction.triggered.connect(self.text.paste)
-
         self.undoAction = QtGui.QAction(QtGui.QIcon("icons/undo.png"), "Undo last action", self)
         self.undoAction.setStatusTip("Undo last action")
         self.undoAction.setShortcut("Ctrl+Z")
@@ -201,13 +186,9 @@ class Main(QtGui.QMainWindow):
         self.redoAction.setShortcut("Ctrl+Y")
         self.redoAction.triggered.connect(self.text.redo)
 
-        # self.toolbar.addAction(self.cutAction)
-        # self.toolbar.addAction(self.copyAction)
-        # self.toolbar.addAction(self.pasteAction)
         self.toolbar.addAction(self.undoAction)
         self.toolbar.addAction(self.redoAction)
 
-        self.toolbar.addSeparator()
 
     def init_formatbar(self):
         self.formatbar = self.addToolBar("Format")
@@ -224,9 +205,7 @@ class Main(QtGui.QMainWindow):
 
         menubar_edit.addAction(self.undoAction)
         menubar_edit.addAction(self.redoAction)
-        # edit.addAction(self.cutAction)
-        # edit.addAction(self.copyAction)
-        # edit.addAction(self.pasteAction)
+
 
     def init_ui(self):
         self.text = CodeEditor(self.sokk)
@@ -283,7 +262,7 @@ class Main(QtGui.QMainWindow):
         if response:
             fileslist = eval(response)
             if fileslist:
-                self.dialogForFiles(fileslist)
+                self.dialog_for_files(fileslist)
 
                 # TODO: Serverilt saab vastuse, kui fail olemas, aga lugemine ja n2itamine aknas puudu
 
@@ -310,7 +289,7 @@ class Main(QtGui.QMainWindow):
         return sokk
 
     # Opens a dialog which shows the files in server and where client can choose the file to be opened
-    def dialogForFiles(self, fileslist):
+    def dialog_for_files(self, fileslist):
         layout = QVBoxLayout()
 
         dialog = QDialog(self)
@@ -328,16 +307,20 @@ class Main(QtGui.QMainWindow):
 
         button = QPushButton("OK")
         layout.addWidget(button)
-        button.clicked.connect(lambda: self.clickHandler(str(box.currentText()), dialog))
+        button.clicked.connect(lambda: self.open_file_handler(str(box.currentText()), dialog))
 
     # Sends the filename to server for open and closes the dialog box
-    def clickHandler(self, txt, dialog):
+    def open_file_handler(self, txt, dialog):
         self.sokk.sendall('o*' + txt)
         LOG.debug("Sent filename %s to server %s to be opened" % (txt, self.sokk.getpeername()))
-        if self.sokk.recv(1024).split("*")[0] == "OK":
+        response = self.sokk.recv(1024).split('*')
+        if response[0] == "OK":
+            for elem in eval(response[1]):
+                self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))
+            LOG.debug("Inserted %s into file %s" % (response[1], txt))
             dialog.hide()
         else:
-            print("File with such name does not exist.")
+            LOG.warning("File with such name does not exist.")
 
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Confirm exit', "Are you sure you want to exit?",
