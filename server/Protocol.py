@@ -9,13 +9,16 @@ class ServerProtocol:
         if eventString.startswith('k'):
             return self.handle_kbe(eventString)
         elif eventString.startswith('n'):
+            if len(self.text) > 0:
+                self.file.save(self.text)
             msg, txt = self.file.new_file(eventString[2:])
             if msg == "OK":
                 self.text = txt
             return msg
         elif eventString.startswith('o'):
-            if self.text != [""] or len(self.text) == 0:
+            if len(self.text) > 0:
                 self.file.save(self.text)
+            print(self.text)
             fname = eventString.strip().split("*")[-1]
             msg, txt = self.file.open_file(fname)
             if msg == "OK":
