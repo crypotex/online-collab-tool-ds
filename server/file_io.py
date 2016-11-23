@@ -30,7 +30,7 @@ class FileHandler:
         try:
             with open(self.fname, "r") as f:
                 for line in f:
-                    txt.append(line)
+                    txt.append(line[:-1])
         except IOError:
             return "ERRRRRRRRORTRAIN", None
         return "OK", txt
@@ -39,6 +39,6 @@ class FileHandler:
         try:
             with open(self.fname, "w") as f:
                 for line in txt:
-                    f.write(line)
+                    f.write(line+'\n')
         except IOError:
             return "Errrrrrrrrrortrain", None

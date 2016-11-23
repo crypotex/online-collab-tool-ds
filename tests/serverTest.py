@@ -1,25 +1,22 @@
 import unittest
-import server.Protocol
-import server.file_io
-import server.server
+import Protocol
+import file_io
+import server
 
 
-class TestProtocolMethods(unittest.TestCase):
-    def __init__(self):
-        self.text = []
-        self.serverProt = server.Protocol.ServerProtocol()
+class TestProtocolMethods(unittest.TestCase, Protocol.ServerProtocol, server.Server, file_io.FileHandler):
 
     def testInsertProtocolLetterInsertBeginning(self):
         self.text = []
         length = len(self.text)
-        self.serverProt.insertProtocol('k',0,0)
+        self.insertProtocol('k',0,0)
         self.assertEqual(len(self.text), length+1)
 
     def testInsertProtocolLetterInsertRegular(self):
         self.text = ['test\r','this is\r','stuff\r']
         length = len(self.text)
         line_length = len(self.text[2])
-        self.serverProt.insertProtocol('k', 3, 2)
+        self.insertProtocol('k', 3, 2)
         self.assertEqual(len(self.text), length)
         self.assertEqual(len(self.text[2]), line_length + 1)
 
@@ -27,7 +24,7 @@ class TestProtocolMethods(unittest.TestCase):
         self.text = ['test\r', 'this is\r', 'stuff\r']
         length = len(self.text)
         line_length = len(self.text[2])
-        self.serverProt.insertProtocol('k', 0, 3)
+        self.insertProtocol('k', 0, 3)
         self.assertEqual(len(self.text), length+1)
         self.assertEqual(len(self.text[2]), line_length)
 
@@ -35,7 +32,7 @@ class TestProtocolMethods(unittest.TestCase):
         self.text = ['test\r', 'this is\r', 'stuff\r']
         length = len(self.text)
         line_length = len(self.text[2]) - 4
-        self.serverProt.insertProtocol('k', 3, 2)
+        self.insertProtocol('k', 3, 2)
         self.assertEqual(len(self.text), length+1)
         self.assertEqual(len(self.text[2]), 4)
         self.assertEqual(len(self.text[3]), line_length+1)
@@ -43,14 +40,14 @@ class TestProtocolMethods(unittest.TestCase):
     def testDeleteProtocolLetterDelete(self):
         self.text = ['test\r', 'this is\r', 'stuff\r']
         line_length = len(self.text[2])
-        self.serverProt.deleteProtocol(3, 2)
+        self.deleteProtocol(3, 2)
         self.assertEqual(len(self.text), line_length - 1)
 
     def testDeleteProtocolLineDelete(self):
         self.text = ['test\r', 'this is\r', '\r']
         length = len(self.text)
         line_length = len(self.text[2])
-        self.serverProt.deleteProtocol(3, 0)
+        self.deleteProtocol(3, 0)
         self.assertEqual(len(self.text), length - 1)
         self.assertEqual(len(self.text[2]), line_length)
 
@@ -58,7 +55,7 @@ class TestProtocolMethods(unittest.TestCase):
         self.text = ['test\r', 'this is\r', 'stuff\r']
         length = len(self.text)
         line_length = len(self.text[0])
-        self.text = self.serverProt.deleteProtocol(0, 0)
+        self.text = self.deleteProtocol(0, 0)
         self.assertEqual(len(self.text), length)
         self.assertEqual(len(self.text[0]), line_length-1)
 
@@ -66,7 +63,7 @@ class TestProtocolMethods(unittest.TestCase):
         self.text = ['', 'this is\r', 'stuff\r']
         length = len(self.text)
         line_length = len(self.text[0])
-        self.text = self.serverProt.deleteProtocol(0, 0)
+        self.text = self.deleteProtocol(0, 0)
         self.assertEqual(len(self.text), length)
         self.assertEqual(len(self.text[0]), line_length)
 
