@@ -20,7 +20,7 @@ class ServerProtocol:
                 self.text = txt
             return "%s*%s" % (msg, self.text)
         elif eventString.startswith('l'):
-            return self.file.list_files()
+            return "OK*" + self.file.list_files()
         else:
             raise RuntimeError("No such thing")
 
