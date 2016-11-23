@@ -72,6 +72,7 @@ class Server:
                 LOG.debug("Sending response: %s to client %s. Type is: %s." % (response, address, type))
                 if type == 'b':
                     for o_client in self.clients:
+                        LOG.debug("Broadcastresponse to client: %s, with message: %s." % (o_client, response))
                         self.clients[o_client].send(response)
                     LOG.debug("Response GOD Broadcasted.")
                 elif type == 's':
