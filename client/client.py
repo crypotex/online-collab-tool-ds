@@ -105,6 +105,13 @@ class Main(QtGui.QMainWindow):
         self.statusbar = self.statusBar()
 
         self.setFixedSize(1030, 800)
+
+        # center the window
+        qr = self.frameGeometry()
+        cp = QtGui.QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
         self.setWindowTitle("Writer")
 
         self.text.setTabStopWidth(33)
@@ -140,15 +147,13 @@ class Main(QtGui.QMainWindow):
     def open(self):
         self.sock.sendall('%s*' % 'l')
 
-        response = self.sock.recv(1024)
+        response = self.sock.recv(1024).split("*")
         LOG.debug("Received filenames %s from server %s" % (response, self.sock.getpeername()))
 
-        if response:
-            fileslist = eval(response)
+        if response[0] == "OK":
+            fileslist = eval(response[1])
             if fileslist:
                 self.dialog_for_files(fileslist)
-
-                # TODO: Serverilt saab vastuse, kui fail olemas, aga lugemine ja n2itamine aknas puudu
 
     def save(self):
 
