@@ -53,31 +53,11 @@ class Main(QtGui.QMainWindow):
         self.openAction.setShortcut("Ctrl+O")
         self.openAction.triggered.connect(self.open)
 
-        self.saveAction = QtGui.QAction(QtGui.QIcon("icons/save-file.png"), "Save", self)
-        self.saveAction.setStatusTip("Save document")
-        self.saveAction.setShortcut("Ctrl+S")
-        #self.saveAction.triggered.connect(self.save)
-
         self.toolbar = self.addToolBar("Options")
 
         self.toolbar.addAction(self.newAction)
         self.toolbar.addAction(self.openAction)
-        self.toolbar.addAction(self.saveAction)
-
         self.toolbar.addSeparator()
-
-        self.undoAction = QtGui.QAction(QtGui.QIcon("icons/undo.png"), "Undo last action", self)
-        self.undoAction.setStatusTip("Undo last action")
-        self.undoAction.setShortcut("Ctrl+Z")
-        self.undoAction.triggered.connect(self.text.undo)
-
-        self.redoAction = QtGui.QAction(QtGui.QIcon("icons/redo.png"), "Redo last action", self)
-        self.redoAction.setStatusTip("Redo last undone thing")
-        self.redoAction.setShortcut("Ctrl+Y")
-        self.redoAction.triggered.connect(self.text.redo)
-
-        self.toolbar.addAction(self.undoAction)
-        self.toolbar.addAction(self.redoAction)
 
     def init_formatbar(self):
         self.formatbar = self.addToolBar("Format")
@@ -86,14 +66,8 @@ class Main(QtGui.QMainWindow):
         menubar = self.menuBar()
 
         menubar_file = menubar.addMenu("File")
-        menubar_edit = menubar.addMenu("Edit")
-
         menubar_file.addAction(self.newAction)
         menubar_file.addAction(self.openAction)
-        menubar_file.addAction(self.saveAction)
-
-        menubar_edit.addAction(self.undoAction)
-        menubar_edit.addAction(self.redoAction)
 
     def init_ui(self):
         self.text = CodeEditor(self.sock)
@@ -173,7 +147,6 @@ class Main(QtGui.QMainWindow):
             if fileslist:
                 self.dialog_for_files(fileslist)
 
-
     # def save(self):
     #
     #     # Only open dialog if there is no filename yet
@@ -233,7 +206,7 @@ class Main(QtGui.QMainWindow):
             self.text.setDisabled(False)
             LOG.info("Window activated for editing")
             dialog.hide()
-            self.handle_request()
+            #self.handle_request()
         else:
             LOG.warning("File with such name does not exist.")
 
@@ -251,7 +224,6 @@ class Main(QtGui.QMainWindow):
             else:
                 print("Whyyyy???")
 
-
     def update_text(self):
         # algus = self.text.cursor()
         cursor = self.text.textCursor()
@@ -262,7 +234,6 @@ class Main(QtGui.QMainWindow):
         LOG.debug("New! Line: %d, column: %d" % (cursor.blockNumber(), cursor.columnNumber()))
         self.text.insertPlainText("tere")
         self.text.moveCursor(block_nr, col_nr)
-
 
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Confirm exit', "Are you sure you want to exit?",
