@@ -104,8 +104,13 @@ class Main(QtGui.QMainWindow):
         # Initialize a statusbar for the window
         self.statusbar = self.statusBar()
 
-        # x and y coordinates on the screen, width, height
-        self.setGeometry(100, 100, 1030, 800)
+        self.setFixedSize(1030, 800)
+
+        # center the window
+        qr = self.frameGeometry()
+        cp = QtGui.QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
         self.setWindowTitle("Writer")
 
@@ -142,15 +147,13 @@ class Main(QtGui.QMainWindow):
     def open(self):
         self.sock.sendall('%s*' % 'l')
 
-        response = self.sock.recv(1024)
+        response = self.sock.recv(1024).split("*")
         LOG.debug("Received filenames %s from server %s" % (response, self.sock.getpeername()))
 
-        if response:
-            fileslist = eval(response)
+        if response[0] == "OK":
+            fileslist = eval(response[1])
             if fileslist:
                 self.dialog_for_files(fileslist)
-
-                # TODO: Serverilt saab vastuse, kui fail olemas, aga lugemine ja n2itamine aknas puudu
 
     def save(self):
 
@@ -201,6 +204,7 @@ class Main(QtGui.QMainWindow):
         LOG.debug("Sent filename %s to server %s to be opened" % (txt, self.sock.getpeername()))
         response = self.sock.recv(1024).split('*')
         if response[0] == "OK":
+            self.text.clear()
             for elem in eval(response[1]):
                 self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))
             LOG.debug("Inserted %s into file %s" % (response[1], txt))

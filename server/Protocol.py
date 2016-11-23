@@ -20,7 +20,7 @@ class ServerProtocol:
                 self.text = txt
             return "%s*%s" % (msg, self.text)
         elif eventString.startswith('l'):
-            return self.file.list_files()
+            return "OK*" + self.file.list_files()
         else:
             raise RuntimeError("No such thing")
 
@@ -31,9 +31,13 @@ class ServerProtocol:
         ##TODO: naiteks newline symboli puhul vms
 
     def handle_kbe(self, eventString):
+        print eventString
         event = eventString.split('*')
         msg = event[1]
+        print [msg]
         blk, col = map(int, event[2:])
+        print blk
+        print col
         if msg == '\x08':
             self.deleteProtocol(col, blk-1)
         else:
@@ -43,6 +47,7 @@ class ServerProtocol:
     def insertProtocol(self, msg, position, linenr):
         # olemas symbol, asukoht reas, reanumber
         print self.text
+        ##TODO: needs fixing prolly
         try:
             self.text[linenr] = self.text[linenr][:position] + msg + self.text[linenr][position:]
         except IndexError:
