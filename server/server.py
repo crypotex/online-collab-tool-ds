@@ -24,7 +24,7 @@ class Server:
         LOG.info("Server Started.")
         self.socket = self.__socket_init(addr, port)
         self.editor = ServerProtocol()
-        self.clients = []
+        self.clients = {}
         self.main_threader()
 
     @staticmethod
@@ -46,7 +46,8 @@ class Server:
                 client, address = self.socket.accept()
                 client.settimeout(7200)
                 threading.Thread(target=self.run_client_thread, args=(client, address)).start()
-                self.clients.append((client, address))
+                self.clients[address] = client
+                print(self.clients)
                 LOG.info("Current Clients: %s" % str(self.clients))
             except KeyboardInterrupt:
                 LOG.exception('Ctrl+C - terminating server')
@@ -64,7 +65,8 @@ class Server:
                 LOG.debug("Recieved message from client %s. Message was: %s." % (address, msg))
                 response = self.editor.handleEvent(msg)
                 LOG.debug("Sending response: %s to client %s." % (response, address))
-                client.send(response)
+                for o_client in self.clients:
+                    self.clients[o_client].send(response)
                 LOG.debug("Response GODSENT.")
             except socket.error as e:
                 LOG.error("Some error: %s" % (str(e)))
