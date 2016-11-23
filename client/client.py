@@ -104,9 +104,7 @@ class Main(QtGui.QMainWindow):
         # Initialize a statusbar for the window
         self.statusbar = self.statusBar()
 
-        # x and y coordinates on the screen, width, height
-        self.setGeometry(100, 100, 1030, 800)
-
+        self.setFixedSize(1030, 800)
         self.setWindowTitle("Writer")
 
         self.text.setTabStopWidth(33)
