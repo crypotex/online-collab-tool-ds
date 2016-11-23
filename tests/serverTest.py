@@ -1,4 +1,6 @@
 import unittest
+import mock
+from mock import patch
 import server.Protocol
 import server.file_io
 import server.server
@@ -69,19 +71,10 @@ class TestProtocolMethods(unittest.TestCase, server.Protocol.ServerProtocol):
 
     def testLockProtocol(self):
         s = 'hello world'
-        self.assertEqual(s.split(), ['hello', 'world'])
+        self.assertEqual(2,3)
         # check that s.split fails when the separator is not a string
         with self.assertRaises(TypeError):
             s.split(2)
-
-    def testHandleEvent(self):
-        self.assertEqual('foo'.upper(), 'FOO')
-
-    def testSaveText(self):
-        self.assertEqual('foo'.upper(), 'FOO')
-
-    def testHandleKbe(self):
-        self.assertEqual('foo'.upper(), 'FOO')
 
 class TestServerMethods(unittest.TestCase, server.server.Server):
 
