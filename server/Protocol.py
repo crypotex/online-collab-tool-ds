@@ -12,7 +12,7 @@ class ServerProtocol:
 
     def handleEvent(self, eventString):
         if eventString.startswith('k'):
-            return 'b', self.handle_kbe(eventString)
+            return 'a', self.handle_kbe(eventString)
         elif eventString.startswith('n'):
             if len(self.text) > 0:
                 self.file.save(self.text)

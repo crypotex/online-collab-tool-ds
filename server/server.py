@@ -47,7 +47,6 @@ class Server:
                 client.settimeout(7200)
                 threading.Thread(target=self.run_client_thread, args=(client, address)).start()
                 self.clients[address] = client
-                print(self.clients)
                 LOG.info("Current Clients: %s" % str(self.clients))
             except KeyboardInterrupt:
                 LOG.exception('Ctrl+C - terminating server')
@@ -72,12 +71,19 @@ class Server:
                 LOG.debug("Sending response: %s to client %s. Type is: %s." % (response, address, type))
                 if type == 'b':
                     for o_client in self.clients:
-                        LOG.debug("Broadcastresponse to client: %s, with message: %s." % (o_client, response))
+                        LOG.debug("Broadcast response to client: %s, with message: %s." % (o_client, response))
                         self.clients[o_client].send(response)
                     LOG.debug("Response GOD Broadcasted.")
                 elif type == 's':
                     client.send(response)
                     LOG.debug("Response GODSent.")
+                elif type == 'a':
+                    for o_client in self.clients:
+                        if o_client != client:
+                            LOG.debug("Broadcast response to all except source. Client: %s, with message: %s."
+                                      % (o_client, response))
+                            self.clients[o_client].send(response)
+                    LOG.debug("Response GOD Broadcasted.")
                 else:
                     LOG.debug("No such time. Something definately wrong. Type: %s and Response: %s." % (type, response))
             except socket.error as e:
@@ -89,6 +95,8 @@ class Server:
                 client.close()
             except socket.error:
                 LOG.info("Client %s disconnected." % address)
+        if address in self.clients:
+            del self.clients[address]
 
 
 # Use only if working with some blocks of data
