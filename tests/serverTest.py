@@ -1,16 +1,66 @@
 import unittest
 import server.Protocol
 import client.client
+import server.file_io
+import server.server
 
 
 class TestProtocolMethods(unittest.TestCase):
+    def __init__(self):
+        self.text = []
+        self.serverProt = server.Protocol.ServerProtocol()
 
-    def testInsertProtocol(self):
-        self.assertEqual('foo'.upper(), 'FOO')
+    def testInsertProtocolLetterInsertBeginning(self):
+        self.text = []
+        length = len(self.text)
+        self.text = self.serverProt.insertProtocol('k',0,0)
+        self.assertEqual(len(self.text), length+1)
 
-    def testDeleteProtocol(self):
+    def testInsertProtocolLetterInsertRegular(self):
+        self.text = ['test\r','this is\r','stuff\r']
+        length = len(self.text)
+        line_length = len(self.text[2])
+        self.text = self.serverProt.insertProtocol('k', 3, 2)
+        self.assertEqual(len(self.text), length)
+        self.assertEqual(len(self.text[2]), line_length + 1)
+
+    def testInsertProtocolNewlineInsert(self):
+        self.text = ['test\r', 'this is\r', 'stuff\r']
+        length = len(self.text)
+        line_length = len(self.text[2])
+        self.text = self.serverProt.insertProtocol('k', 3, 2)
+        self.assertEqual(len(self.text), length)
+        self.assertEqual(len(self.text[2]), line_length + 1)
+
+    def testInsertProtocolNewlineBetweenInsert(self):
+        self.text = ['test\r', 'this is\r', 'stuff\r']
+        length = len(self.text)
+        line_length = len(self.text[2])
+        self.text = self.serverProt.insertProtocol('k', 3, 2)
+        self.assertEqual(len(self.text), length)
+        self.assertEqual(len(self.text[2]), line_length + 1)
+
+    def testDeleteProtocolLetterDelete(self):
+        self.text = []
         self.assertTrue('FOO'.isupper())
         self.assertFalse('Foo'.isupper())
+
+    def testDeleteProtocolLineDelete(self):
+        self.text = []
+        self.assertTrue('FOO'.isupper())
+        self.assertFalse('Foo'.isupper())
+
+    def testDeleteProtocolLineMerge(self):
+        self.text = []
+        self.assertTrue('FOO'.isupper())
+        self.assertFalse('Foo'.isupper())
+
+    def testDeleteProtocolBeginning(self):
+        self.text = []
+        self.assertTrue('FOO'.isupper())
+        self.assertFalse('Foo'.isupper())
+
+
 
     def testLockProtocol(self):
         s = 'hello world'
