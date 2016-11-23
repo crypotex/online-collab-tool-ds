@@ -1,10 +1,10 @@
 import unittest
-import Protocol
-import file_io
-import server
+import server.Protocol
+import server.file_io
+import server.server
 
 
-class TestProtocolMethods(unittest.TestCase, Protocol.ServerProtocol, server.Server, file_io.FileHandler):
+class TestProtocolMethods(unittest.TestCase, server.Protocol.ServerProtocol):
 
     def testInsertProtocolLetterInsertBeginning(self):
         self.text = []
@@ -41,21 +41,21 @@ class TestProtocolMethods(unittest.TestCase, Protocol.ServerProtocol, server.Ser
         self.text = ['test\r', 'this is\r', 'stuff\r']
         line_length = len(self.text[2])
         self.deleteProtocol(3, 2)
-        self.assertEqual(len(self.text), line_length - 1)
+        self.assertEqual(len(self.text[2]), line_length - 1)
 
     def testDeleteProtocolLineDelete(self):
         self.text = ['test\r', 'this is\r', '\r']
         length = len(self.text)
-        line_length = len(self.text[2])
-        self.deleteProtocol(3, 0)
+        line_length = len(self.text[1])
+        self.deleteProtocol(0, 2)
         self.assertEqual(len(self.text), length - 1)
-        self.assertEqual(len(self.text[2]), line_length)
+        self.assertEqual(len(self.text[1]), line_length)
 
     def testDeleteProtocolBeginning(self):
         self.text = ['test\r', 'this is\r', 'stuff\r']
         length = len(self.text)
         line_length = len(self.text[0])
-        self.text = self.deleteProtocol(0, 0)
+        self.deleteProtocol(0, 0)
         self.assertEqual(len(self.text), length)
         self.assertEqual(len(self.text[0]), line_length-1)
 
@@ -63,7 +63,7 @@ class TestProtocolMethods(unittest.TestCase, Protocol.ServerProtocol, server.Ser
         self.text = ['', 'this is\r', 'stuff\r']
         length = len(self.text)
         line_length = len(self.text[0])
-        self.text = self.deleteProtocol(0, 0)
+        self.deleteProtocol(0, 0)
         self.assertEqual(len(self.text), length)
         self.assertEqual(len(self.text[0]), line_length)
 
@@ -74,9 +74,6 @@ class TestProtocolMethods(unittest.TestCase, Protocol.ServerProtocol, server.Ser
         with self.assertRaises(TypeError):
             s.split(2)
 
-    def testAuthentProtocol(self):
-        self.assertEqual('foo'.upper(), 'FOO')
-
     def testHandleEvent(self):
         self.assertEqual('foo'.upper(), 'FOO')
 
@@ -86,23 +83,7 @@ class TestProtocolMethods(unittest.TestCase, Protocol.ServerProtocol, server.Ser
     def testHandleKbe(self):
         self.assertEqual('foo'.upper(), 'FOO')
 
-class TestFileIOMethods(unittest.TestCase):
-
-    def testNewFile(self):
-        self.assertEqual('foo'.upper(), 'FOO')
-
-    def testOpenFile(self):
-        self.assertTrue('FOO'.isupper())
-        self.assertFalse('Foo'.isupper())
-
-    def testSaveFile(self):
-        s = 'hello world'
-        self.assertEqual(s.split(), ['hello', 'world'])
-        # check that s.split fails when the separator is not a string
-        with self.assertRaises(TypeError):
-            s.split(2)
-
-class TestServerMethods(unittest.TestCase):
+class TestServerMethods(unittest.TestCase, server.server.Server):
 
     def testMainThreader(self):
         self.assertEqual('foo'.upper(), 'FOO')
