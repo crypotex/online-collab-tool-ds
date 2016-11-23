@@ -34,7 +34,6 @@ class CodeEditor(QPlainTextEdit):
         self.update_line_number_area_width(0)
         self.sokk = sokk
 
-
     def line_number_area_width(self):
         digits = 1
         count = max(1, self.blockCount())

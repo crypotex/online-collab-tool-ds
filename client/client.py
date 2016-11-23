@@ -8,9 +8,10 @@ from PyQt4 import QtGui
 from argparse import ArgumentParser
 from socket import AF_INET, SOCK_STREAM, socket
 
-from PyQt4.QtCore import SIGNAL
+from PyQt4.QtCore import SIGNAL, SLOT
 from PyQt4.QtGui import QComboBox
 from PyQt4.QtGui import QDialog
+from PyQt4.QtGui import QDialogButtonBox
 from PyQt4.QtGui import QInputDialog
 from PyQt4.QtGui import QMessageBox
 from PyQt4.QtGui import QPixmap
@@ -204,12 +205,10 @@ class Main(QtGui.QMainWindow):
 
         layout.addWidget(box)
 
-        ok_button = QPushButton("OK")
-        cancel_button = QPushButton("Cancel")
-        layout.addWidget(ok_button)
-        layout.addWidget(cancel_button)
-        dialog.connect(cancel_button, SIGNAL("clicked()"), dialog.reject)
-        dialog.connect(ok_button, SIGNAL("clicked()"), lambda: self.open_file_handler(str(box.currentText()), dialog))
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        layout.addWidget(button_box)
+        button_box.accepted.connect(lambda: self.open_file_handler(str(box.currentText()), dialog))
+        button_box.rejected.connect(dialog.reject)
 
     # Sends the filename to server for open and closes the dialog box
     def open_file_handler(self, txt, dialog):
