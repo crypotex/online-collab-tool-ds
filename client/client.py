@@ -97,6 +97,10 @@ class Main(QtGui.QMainWindow):
         self.text = CodeEditor(self.sock)
         self.setCentralWidget(self.text)
 
+        # window is disabled until new file is made
+        # or some file is opened
+        self.text.setDisabled(True)
+
         self.init_toolbar()
         self.init_formatbar()
         self.init_menubar()
@@ -135,6 +139,9 @@ class Main(QtGui.QMainWindow):
             LOG.debug("Sent filename %s to server %s to be created" % (filename, self.sock.getpeername()))
             if self.sock.recv(1024).split('*')[0] == 'OK':
                 LOG.debug("File %s created in server" % filename)
+                self.text.clear()
+                self.text.setDisabled(False)
+                LOG.info("Window activated for editing")
         elif not str(filename).endswith('.txt') and ok:
             LOG.debug("Filename %s doesn't end with .txt" % filename)
             warning = QMessageBox()
@@ -208,8 +215,10 @@ class Main(QtGui.QMainWindow):
             for elem in eval(response[1]):
                 self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))
             LOG.debug("Inserted %s into file %s" % (response[1], txt))
+            self.text.setDisabled(False)
+            LOG.info("Window activated for editing")
             dialog.hide()
-            self.updateText()
+            #self.updateText()
         else:
             LOG.warning("File with such name does not exist.")
 
