@@ -8,14 +8,12 @@ from PyQt4 import QtGui
 from argparse import ArgumentParser
 from socket import AF_INET, SOCK_STREAM, socket
 
-from PyQt4.QtCore import SIGNAL, SLOT
 from PyQt4.QtGui import QComboBox
 from PyQt4.QtGui import QDialog
 from PyQt4.QtGui import QDialogButtonBox
 from PyQt4.QtGui import QInputDialog
 from PyQt4.QtGui import QMessageBox
 from PyQt4.QtGui import QPixmap
-from PyQt4.QtGui import QPushButton
 from PyQt4.QtGui import QVBoxLayout
 
 from texteditor import CodeEditor
@@ -147,21 +145,6 @@ class Main(QtGui.QMainWindow):
             if fileslist:
                 self.dialog_for_files(fileslist)
 
-    # def save(self):
-    #
-    #     # Only open dialog if there is no filename yet
-    #     if not self.filename:
-    #         self.filename = QtGui.QFileDialog.getSaveFileName(self, 'Save File')
-    #
-    #     # Append extension if not there yet
-    #     if not self.filename.endsWith(".txt"):
-    #         self.filename += ".txt"
-    #
-    #     # We just store the contents of the text file along with the
-    #     # format in html, which Qt does in a very nice way for us
-    #     with open(self.filename, "wt") as save_file:
-    #         save_file.write(self.text.toPlainText())
-
     # Create connection to server
     def connect_to_server(self, server_addr, port):
         sokk = socket(AF_INET, SOCK_STREAM)
@@ -206,7 +189,7 @@ class Main(QtGui.QMainWindow):
             self.text.setDisabled(False)
             LOG.info("Window activated for editing")
             dialog.hide()
-            #self.handle_request()
+            # self.handle_request()
         else:
             LOG.warning("File with such name does not exist.")
 
