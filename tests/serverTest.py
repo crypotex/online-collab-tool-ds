@@ -1,6 +1,6 @@
 import unittest
 import server.Protocol
-import client.texteditor
+import client.client
 
 
 class TestProtocolMethods(unittest.TestCase):
