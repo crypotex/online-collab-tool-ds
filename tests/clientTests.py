@@ -1,5 +1,5 @@
 import unittest
-import client.texteditor
+import client.client
 
 
 class TestClientMethods(unittest.TestCase):
