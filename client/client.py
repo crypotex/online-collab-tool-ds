@@ -36,7 +36,7 @@ class Main(QtGui.QMainWindow):
 
         self.server_addr = server_addr
         self.port = port
-        self.sock = self.connectToServer(self.server_addr, self.port)
+        self.sock = self.connect_to_server(self.server_addr, self.port)
 
         self.filename = "Untitled"
 
@@ -56,7 +56,7 @@ class Main(QtGui.QMainWindow):
         self.saveAction = QtGui.QAction(QtGui.QIcon("icons/save-file.png"), "Save", self)
         self.saveAction.setStatusTip("Save document")
         self.saveAction.setShortcut("Ctrl+S")
-        self.saveAction.triggered.connect(self.save)
+        #self.saveAction.triggered.connect(self.save)
 
         self.toolbar = self.addToolBar("Options")
 
@@ -102,6 +102,13 @@ class Main(QtGui.QMainWindow):
         # window is disabled until new file is made
         # or some file is opened
         self.text.setDisabled(True)
+        txt = self.sock.recv(1024)
+        if txt != '[]':
+            for elem in eval(txt):
+                self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))
+            self.text.setDisabled(False)
+        else:
+            self.text.setPlainText("")
 
         self.init_toolbar()
         self.init_formatbar()
@@ -134,6 +141,11 @@ class Main(QtGui.QMainWindow):
 
         self.statusbar.showMessage("Line: {} | Column: {}".format(line, col))
 
+    def handle_request(self):
+        response = self.sock.recv(1024).split('*')
+        if response[0] == 'a':
+            LOG.debug("Received response from server")
+
     def new(self):
         filename, ok = QInputDialog.getText(self, 'Choose file name', 'Enter file name:')
         if str(filename).endswith('.txt') and ok:
@@ -158,31 +170,32 @@ class Main(QtGui.QMainWindow):
     def open(self):
         self.sock.sendall('%s*' % 'l')
 
-        response = self.sock.recv(1024).split("*")
+        response = self.sock.recv(1024).split('*')
         LOG.debug("Received filenames %s from server %s" % (response, self.sock.getpeername()))
 
-        if response[0] == "OK":
+        if response[0] == 'OK':
             fileslist = eval(response[1])
             if fileslist:
                 self.dialog_for_files(fileslist)
 
-    def save(self):
 
-        # Only open dialog if there is no filename yet
-        if not self.filename:
-            self.filename = QtGui.QFileDialog.getSaveFileName(self, 'Save File')
-
-        # Append extension if not there yet
-        if not self.filename.endsWith(".txt"):
-            self.filename += ".txt"
-
-        # We just store the contents of the text file along with the
-        # format in html, which Qt does in a very nice way for us
-        with open(self.filename, "wt") as save_file:
-            save_file.write(self.text.toPlainText())
+    # def save(self):
+    #
+    #     # Only open dialog if there is no filename yet
+    #     if not self.filename:
+    #         self.filename = QtGui.QFileDialog.getSaveFileName(self, 'Save File')
+    #
+    #     # Append extension if not there yet
+    #     if not self.filename.endsWith(".txt"):
+    #         self.filename += ".txt"
+    #
+    #     # We just store the contents of the text file along with the
+    #     # format in html, which Qt does in a very nice way for us
+    #     with open(self.filename, "wt") as save_file:
+    #         save_file.write(self.text.toPlainText())
 
     # Create connection to server
-    def connectToServer(self, server_addr, port):
+    def connect_to_server(self, server_addr, port):
         sokk = socket(AF_INET, SOCK_STREAM)
         sokk.connect((server_addr, port))
         LOG.info("Connected to server: %s" % ((server_addr, port),))
@@ -229,7 +242,7 @@ class Main(QtGui.QMainWindow):
         else:
             LOG.warning("File with such name does not exist.")
 
-    def updateText(self):
+    def update_text(self):
         # algus = self.text.cursor()
         cursor = self.text.textCursor()
         response = self.sock.recv(1024).split('*')
