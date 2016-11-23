@@ -12,15 +12,13 @@ class ServerProtocol:
             msg, txt = self.file.new_file(eventString[2:])
             if msg == "OK":
                 self.text = txt
-            # TODO: CREATE NEW FILE IN CLIENT
             return msg
         elif eventString.startswith('o'):
-            file = eventString.strip().split("*")[-1]
-            msg, txt = self.file.open_file(file)
+            fname = eventString.strip().split("*")[-1]
+            msg, txt = self.file.open_file(fname)
             if msg == "OK":
                 self.text = txt
-            # TODO: RETURN WHOLE TEXT
-            return msg
+            return "%s*%s" % (msg, self.text)
         elif eventString.startswith('l'):
             return self.file.list_files()
         else:
