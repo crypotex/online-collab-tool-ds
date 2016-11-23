@@ -1,6 +1,5 @@
 import unittest
 import server.Protocol
-import client.client
 import server.file_io
 import server.server
 
@@ -28,17 +27,18 @@ class TestProtocolMethods(unittest.TestCase):
         self.text = ['test\r', 'this is\r', 'stuff\r']
         length = len(self.text)
         line_length = len(self.text[2])
-        self.text = self.serverProt.insertProtocol('k', 3, 2)
-        self.assertEqual(len(self.text), length)
-        self.assertEqual(len(self.text[2]), line_length + 1)
+        self.text = self.serverProt.insertProtocol('k', 0, 3)
+        self.assertEqual(len(self.text), length+1)
+        self.assertEqual(len(self.text[2]), line_length)
 
     def testInsertProtocolNewlineBetweenInsert(self):
         self.text = ['test\r', 'this is\r', 'stuff\r']
         length = len(self.text)
-        line_length = len(self.text[2])
+        line_length = len(self.text[2]) - 4
         self.text = self.serverProt.insertProtocol('k', 3, 2)
-        self.assertEqual(len(self.text), length)
-        self.assertEqual(len(self.text[2]), line_length + 1)
+        self.assertEqual(len(self.text), length+1)
+        self.assertEqual(len(self.text[2]), 4)
+        self.assertEqual(len(self.text[3]), line_length+1)
 
     def testDeleteProtocolLetterDelete(self):
         self.text = []

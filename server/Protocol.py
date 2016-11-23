@@ -48,27 +48,13 @@ class ServerProtocol:
         # olemas symbol, asukoht reas, reanumber
         print self.text
         ##TODO: needs fixing prolly
-        if msg == '\r':
-            linenr += 1
+        try:
+            self.text[linenr] = self.text[linenr][:position] + msg + self.text[linenr][position:]
+        except IndexError:
             try:
-                self.text = self.text[:linenr] + [self.text[linenr][:position] + msg] + \
-                            [self.text[linenr][position:]] + self.text[linenr+1:]
+                self.text[linenr] = msg
             except IndexError:
-                try:
-                    self.text[linenr] = self.text[linenr][:position] + msg + self.text[linenr][position:]
-                except IndexError:
-                    try:
-                        self.text[linenr] = msg
-                    except IndexError:
-                        self.text += msg
-        else:
-            try:
-                self.text[linenr] = self.text[linenr][:position] + msg + self.text[linenr][position:]
-            except IndexError:
-                try:
-                    self.text[linenr] = msg
-                except IndexError:
-                    self.text += msg
+                self.text += msg
         ####TODO: line change in the middle of the line
         #if self.text[linenr][position] == '\r':
         #    self.text = self.text[:linenr] + list(self.text[linenr][:position+1]) + \
