@@ -201,6 +201,7 @@ class Main(QtGui.QMainWindow):
         LOG.debug("Sent filename %s to server %s to be opened" % (txt, self.sock.getpeername()))
         response = self.sock.recv(1024).split('*')
         if response[0] == "OK":
+            self.text.clear()
             for elem in eval(response[1]):
                 self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))
             LOG.debug("Inserted %s into file %s" % (response[1], txt))
