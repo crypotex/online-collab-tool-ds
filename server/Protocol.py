@@ -18,7 +18,6 @@ class ServerProtocol:
         elif eventString.startswith('o'):
             if len(self.text) > 0:
                 self.file.save(self.text)
-            print(self.text)
             fname = eventString.strip().split("*")[-1]
             msg, txt = self.file.open_file(fname)
             if msg == "OK":
