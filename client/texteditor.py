@@ -265,7 +265,7 @@ class Main(QtGui.QMainWindow):
             LOG.debug("Sent filename %s to server %s to be created" % (filename, self.sokk.getpeername()))
             if self.sokk.recv(1024).split('*')[0] == 'OK':
                 LOG.debug("File %s created in server" % filename)
-        else:
+        elif not str(filename).endswith('.txt') and ok:
             LOG.debug("Filename %s doesn't end with .txt" % filename)
             warning = QMessageBox()
             warning.setIconPixmap(QPixmap("icons/Error-96.png"))
@@ -273,7 +273,6 @@ class Main(QtGui.QMainWindow):
             warning.setWindowTitle("Warning")
             warning.setStandardButtons(QMessageBox.Ok)
             warning.exec_()
-            # TODO: Saa serverilt vastus, kas OK v NOK
 
     def open(self):
         self.sokk.sendall('%s*' % 'l')
