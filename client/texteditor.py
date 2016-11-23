@@ -23,7 +23,7 @@ class LineNumberArea(QWidget):
 
 
 class CodeEditor(QPlainTextEdit):
-    def __init__(self, sokk):
+    def __init__(self, Q, outq):
         super(CodeEditor, self).__init__()
         self.lineNumberArea = LineNumberArea(self)
 
@@ -32,7 +32,8 @@ class CodeEditor(QPlainTextEdit):
         self.connect(self, SIGNAL('cursorPositionChanged()'), self.highlight_current_line)
 
         self.update_line_number_area_width(0)
-        self.sokk = sokk
+        self.Q = Q
+        self.Q_out = outq
 
     def line_number_area_width(self):
         digits = 1
@@ -108,6 +109,11 @@ class CodeEditor(QPlainTextEdit):
         cursor_loc = self.textCursor()
         blck_nr = cursor_loc.blockNumber() + 1
         col_nr = cursor_loc.columnNumber()
+        """
         self.sokk.sendall("%s*%s*%d*%d" % ("k", l, blck_nr, col_nr))
         msg = self.sokk.recv(1024)
         print("GODRESPONSE. GOD: %s" % msg)
+        """
+        self.Q_out.put("%s*%s*%d*%d" % ("k", l, blck_nr, col_nr), timeout=1)
+        msg = self.Q.get(timeout=1)
+        print("GOT RESPONSE: %s." % msg)

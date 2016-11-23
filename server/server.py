@@ -59,7 +59,7 @@ class Server:
         try:
             client.send(str(self.editor.text))
         except socket.error as e:
-            LOG.error("Some socket error: %s" % (str(e)))
+            LOG.error("Some socket error when initializing text: %s" % (str(e)))
 
         while True:
             try:

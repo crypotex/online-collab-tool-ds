@@ -4,9 +4,12 @@
 
 import logging
 import sys
+import threading
+import select
+from Queue import Queue
 from PyQt4 import QtGui
 from argparse import ArgumentParser
-from socket import AF_INET, SOCK_STREAM, socket
+from socket import AF_INET, SOCK_STREAM, socket, error as so_err
 
 from PyQt4.QtGui import QComboBox
 from PyQt4.QtGui import QDialog
@@ -20,6 +23,7 @@ from texteditor import CodeEditor
 
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
 DEFAULT_SERVER_PORT = 49995
+DEFAULT_BUFFER_SIZE = 1024*1024
 
 FORMAT = '%(asctime)-15s %(levelname)s %(threadName)s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=FORMAT)
@@ -37,8 +41,44 @@ class Main(QtGui.QMainWindow):
         self.sock = self.connect_to_server(self.server_addr, self.port)
 
         self.filename = "Untitled"
+        init_txt = self.sock.recv(DEFAULT_BUFFER_SIZE)
 
-        self.init_ui()
+        self.Q = Queue(maxsize=1024)
+        self.Q_out = Queue(maxsize=1024)
+        self.MAGIC = threading.Event()
+        threading.Thread(target=self.run_listener_thread, name="listener").start()
+        self.init_ui(init_txt)
+
+    def run_listener_thread(self):
+        LOG.info("New listener thread initialized with :%s socket." % self.sock)
+        while self.MAGIC:
+            try:
+                read, write, error = select.select([self.sock], [self.sock], [])
+                if not self.Q_out.empty():
+                    LOG.debug("Select: %s, %s, %s." % (read, write, error))
+                    for s in write:
+                        print(s)
+                        data = self.Q_out.get_nowait()
+                        s.send(data)
+                for s in read:
+                    LOG.debug("Select: %s, %s, %s." % (read, write, error))
+                    msg = s.recv(DEFAULT_BUFFER_SIZE)
+                    LOG.debug("Got message from server: %s." % msg)
+                    # Might use better block/timeout <- check this out
+                    self.Q.put(msg, block=True, timeout=1)
+                    LOG.debug("Response: %s added to Q." % msg)
+            except so_err as e:
+                LOG.error("Socket error: %s" % (str(e)))
+                break
+            except KeyboardInterrupt:
+                LOG.exception('Ctrl+C - terminating server')
+                break
+        print("kalar3")
+        if self.sock is not None:
+            try:
+                self.sock.close()
+            except so_err:
+                LOG.debug("Client disconnected.")
 
     def init_toolbar(self):
         self.newAction = QtGui.QAction(QtGui.QIcon("icons/add-file.png"), "New", self)
@@ -67,16 +107,16 @@ class Main(QtGui.QMainWindow):
         menubar_file.addAction(self.newAction)
         menubar_file.addAction(self.openAction)
 
-    def init_ui(self):
-        self.text = CodeEditor(self.sock)
+    def init_ui(self, text):
+        self.text = CodeEditor(self.Q, self.Q_out)
         self.setCentralWidget(self.text)
 
         # window is disabled until new file is made
         # or some file is opened
         self.text.setDisabled(True)
-        txt = self.sock.recv(1024)
-        if txt != '[]':
-            for elem in eval(txt):
+        # txt = '[]' if self.Q.empty() else self.Q.get(timeout=2)
+        if text != '[]':
+            for elem in eval(text):
                 self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))
             self.text.setDisabled(False)
         else:
@@ -116,9 +156,9 @@ class Main(QtGui.QMainWindow):
     def new(self):
         filename, ok = QInputDialog.getText(self, 'Choose file name', 'Enter file name:')
         if str(filename).endswith('.txt') and ok:
-            self.sock.sendall('%s*%s' % ('n', filename))
+            self.Q_out.put('%s*%s' % ('n', filename), timeout=2)
             LOG.debug("Sent filename %s to server %s to be created" % (filename, self.sock.getpeername()))
-            if self.sock.recv(1024).split('*')[0] == 'OK':
+            if self.Q.get(timeout=2).split('*')[0] == 'OK':
                 LOG.debug("File %s created in server" % filename)
                 self.filename = str(filename)
                 self.setWindowTitle(self.filename)
@@ -135,9 +175,9 @@ class Main(QtGui.QMainWindow):
             warning.exec_()
 
     def open(self):
-        self.sock.sendall('%s*' % 'l')
+        self.Q_out.put('%s*' % 'l', timeout=2)
 
-        response = self.sock.recv(1024).split('*')
+        response = self.Q.get(timeout=2).split('*')
         LOG.debug("Received filenames %s from server %s" % (response, self.sock.getpeername()))
 
         if response[0] == 'OK':
@@ -176,9 +216,9 @@ class Main(QtGui.QMainWindow):
 
     # Sends the filename to server for open and closes the dialog box
     def open_file_handler(self, txt, dialog):
-        self.sock.sendall('o*' + txt)
+        self.Q_out.put('o*' + txt, timeout=2)
         LOG.debug("Sent filename %s to server %s to be opened" % (txt, self.sock.getpeername()))
-        response = self.sock.recv(1024).split('*')
+        response = self.Q.get(timeout=2).split('*')
         if response[0] == "OK":
             self.text.clear()
             for elem in eval(response[1]):
@@ -192,20 +232,21 @@ class Main(QtGui.QMainWindow):
             # self.handle_request()
         else:
             LOG.warning("File with such name does not exist.")
-
+    """
     def handle_request(self):
-        response = self.sock.recv(1024).split('*')
+        response = self.Q.get(timeout=2).split('*')
         while True:
             if response[0] == 'a':
                 LOG.debug("Received response from server")
                 self.update_text()
-                response = self.sock.recv(1024).split('*')
+                response = self.Q.get(timeout=2).split('*')
             elif response[0] == 'OK' and len(response[1]) == 0:
                 self.new()
             elif response[0] == 'OK' and len(response[1]) > 0:
                 self.open()
             else:
                 print("Whyyyy???")
+    """
 
     def update_text(self):
         # algus = self.text.cursor()
@@ -224,6 +265,9 @@ class Main(QtGui.QMainWindow):
 
         if reply == QtGui.QMessageBox.Yes:
             event.accept()
+            LOG.info("Killing thread.")
+            self.MAGIC.set()
+            LOG.debug("Thread killed.")
         else:
             event.ignore()
 
