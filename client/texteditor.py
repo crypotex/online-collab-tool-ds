@@ -263,6 +263,8 @@ class Main(QtGui.QMainWindow):
         if str(filename).endswith('.txt') and ok:
             self.sokk.sendall('%s*%s' % ('n', filename))
             LOG.debug("Sent filename %s to server %s to be created" % (filename, self.sokk.getpeername()))
+            if self.sokk.recv(1024).split('*')[0] == 'OK':
+                LOG.debug("File %s created in server" % filename)
         else:
             LOG.debug("Filename %s doesn't end with .txt" % filename)
             warning = QMessageBox()
