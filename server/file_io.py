@@ -9,7 +9,7 @@ class FileHandler:
         self.fname = ""
 
     def new_file(self, fstring):
-        fs = "%s/%s" % (self.dump_dir, fstring)
+        fs = join(self.dump_dir, fstring)
         if exists(fs):
             return "File with such name already exists", None
         else:
