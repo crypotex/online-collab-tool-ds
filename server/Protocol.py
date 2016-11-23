@@ -35,10 +35,10 @@ class ServerProtocol:
         msg = event[1]
         blk, col = map(int, event[2:])
         if msg == '\x08':
-            return_msg = self.deleteProtocol(col, blk-1)
+            self.deleteProtocol(col, blk-1)
         else:
-            return_msg = self.insertProtocol(msg, col-1, blk-1)
-        return return_msg
+            self.insertProtocol(msg, col-1, blk-1)
+        return 'a'+eventString[1:]
 
     def insertProtocol(self, msg, position, linenr):
         # olemas symbol, asukoht reas, reanumber
@@ -56,7 +56,7 @@ class ServerProtocol:
         #                list(self.text[linenr][position+1:]) + self.text[linenr+1:]
         print self.text
         # Need better return message - going to distribute these things to others - return the updated char/line
-        return "inserted"
+        return 'inserted'
 
     def deleteProtocol(self,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
