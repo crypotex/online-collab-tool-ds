@@ -6,6 +6,7 @@ import logging
 import sys
 import threading
 import select
+from PyQt4 import QtCore
 from Queue import Queue
 from PyQt4 import QtGui
 from argparse import ArgumentParser
@@ -17,6 +18,7 @@ from PyQt4.QtGui import QDialogButtonBox
 from PyQt4.QtGui import QInputDialog
 from PyQt4.QtGui import QMessageBox
 from PyQt4.QtGui import QPixmap
+from PyQt4.QtGui import QTextCursor
 from PyQt4.QtGui import QVBoxLayout
 
 from texteditor import CodeEditor
@@ -64,9 +66,12 @@ class Main(QtGui.QMainWindow):
                     LOG.debug("Select: %s, %s, %s." % (read, write, error))
                     msg = s.recv(DEFAULT_BUFFER_SIZE)
                     LOG.debug("Got message from server: %s." % msg)
-                    # Might use better block/timeout <- check this out
-                    self.Q.put(msg, block=True, timeout=1)
-                    LOG.debug("Response: %s added to Q." % msg)
+                    if msg.split('*')[0] == 'a':
+                        self.update_text(msg)
+                    else:
+                        # Might use better block/timeout <- check this out
+                        self.Q.put(msg, block=True, timeout=1)
+                        LOG.debug("Response: %s added to Q." % msg)
             except so_err as e:
                 LOG.error("Socket error: %s" % (str(e)))
                 break
@@ -247,16 +252,25 @@ class Main(QtGui.QMainWindow):
                 print("Whyyyy???")
     """
 
-    def update_text(self):
+    def update_text(self, msg):
+        data = msg.split('*')
+        letter = data[1]
+        blck = data[2]
+        col = data[3]
+        LOG.debug("Letter: %s, blck: %s, col: %s" % (letter, blck, col))
         # algus = self.text.cursor()
         cursor = self.text.textCursor()
         block_nr = cursor.blockNumber() + 1
         col_nr = cursor.columnNumber()
         LOG.debug("Line: %d, column: %d" % (block_nr, col_nr))
-        self.text.moveCursor(2, 2)
+        #self.text.moveCursor(2, 2)
+        cursor.setPosition(0)
+        cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, n=int(blck))
+        cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.MoveAnchor, n=int(col))
+        self.text.setTextCursor(cursor) # sets the cursor to the new place
         LOG.debug("New! Line: %d, column: %d" % (cursor.blockNumber(), cursor.columnNumber()))
-        self.text.insertPlainText("tere")
-        self.text.moveCursor(block_nr, col_nr)
+        self.text.insertPlainText(letter)
+        #self.text.moveCursor(block_nr, col_nr)
 
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Confirm exit', "Are you sure you want to exit?",
@@ -284,6 +298,8 @@ def main():
                         default=DEFAULT_SERVER_PORT)
 
     args = parser.parse_args()
+
+    registerMe = QtCore.QVariant(Main)
     app = QtGui.QApplication(sys.argv)
     main_window = Main(args.host, args.port)
     main_window.show()
