@@ -1,6 +1,4 @@
 import unittest
-import mock
-from mock import patch
 import server.Protocol
 import server.file_io
 import server.server
