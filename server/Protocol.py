@@ -14,6 +14,8 @@ class ServerProtocol:
                 self.text = txt
             return msg
         elif eventString.startswith('o'):
+            if self.text != [""] or len(self.text) == 0:
+                self.file.save(self.text)
             fname = eventString.strip().split("*")[-1]
             msg, txt = self.file.open_file(fname)
             if msg == "OK":
