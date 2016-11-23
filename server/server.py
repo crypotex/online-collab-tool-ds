@@ -70,22 +70,23 @@ class Server:
                 type, response = self.editor.handleEvent(msg)
                 LOG.debug("Sending response: %s to client %s. Type is: %s." % (response, address, type))
                 if type == 'b':
-                    for o_client in self.clients:
-                        LOG.debug("Broadcast response to client: %s, with message: %s." % (o_client, response))
-                        self.clients[o_client].send(response)
+                    for client_address in self.clients:
+                        LOG.debug("Broadcast response to client: %s, with message: %s." % (client_address, response))
+                        self.clients[client_address].send(response)
                     LOG.debug("Response GOD Broadcasted.")
                 elif type == 's':
                     client.send(response)
                     LOG.debug("Response GODSent.")
                 elif type == 'a':
                     for client_address in self.clients:
+
                         if client_address != address:
                             LOG.debug("Broadcast response to all except source. Client: %s, with message: %s."
-                                      % (o_client, response))
-                            self.clients[o_client].send(response)
-                    LOG.debug("Response GOD Broadcasted.")
+                                      % (client_address, response))
+                            self.clients[client_address].send(response)
+                    LOG.debug("Response GOD Broadcasted to all except source.")
                 else:
-                    LOG.debug("No such time. Something definately wrong. Type: %s and Response: %s." % (type, response))
+                    LOG.debug("No such type. Something definately wrong. Type: %s and Response: %s." % (type, response))
             except socket.error as e:
                 LOG.error("Socket error: %s" % (str(e)))
                 break
