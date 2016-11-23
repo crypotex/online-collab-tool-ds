@@ -8,6 +8,7 @@ from PyQt4 import QtGui
 from argparse import ArgumentParser
 from socket import AF_INET, SOCK_STREAM, socket
 
+from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QComboBox
 from PyQt4.QtGui import QDialog
 from PyQt4.QtGui import QInputDialog
@@ -36,7 +37,7 @@ class Main(QtGui.QMainWindow):
         self.port = port
         self.sock = self.connectToServer(self.server_addr, self.port)
 
-        self.filename = ""
+        self.filename = "Untitled"
 
         self.init_ui()
 
@@ -116,7 +117,7 @@ class Main(QtGui.QMainWindow):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-        self.setWindowTitle("Writer")
+        self.setWindowTitle(self.filename)
 
         self.text.setTabStopWidth(33)
         self.setWindowIcon(QtGui.QIcon("icons/icon.png"))
@@ -139,6 +140,8 @@ class Main(QtGui.QMainWindow):
             LOG.debug("Sent filename %s to server %s to be created" % (filename, self.sock.getpeername()))
             if self.sock.recv(1024).split('*')[0] == 'OK':
                 LOG.debug("File %s created in server" % filename)
+                self.filename = str(filename)
+                self.setWindowTitle(self.filename)
                 self.text.clear()
                 self.text.setDisabled(False)
                 LOG.info("Window activated for editing")
@@ -201,9 +204,12 @@ class Main(QtGui.QMainWindow):
 
         layout.addWidget(box)
 
-        button = QPushButton("OK")
-        layout.addWidget(button)
-        button.clicked.connect(lambda: self.open_file_handler(str(box.currentText()), dialog))
+        ok_button = QPushButton("OK")
+        cancel_button = QPushButton("Cancel")
+        layout.addWidget(ok_button)
+        layout.addWidget(cancel_button)
+        dialog.connect(cancel_button, SIGNAL("clicked()"), dialog.reject)
+        dialog.connect(ok_button, SIGNAL("clicked()"), lambda: self.open_file_handler(str(box.currentText()), dialog))
 
     # Sends the filename to server for open and closes the dialog box
     def open_file_handler(self, txt, dialog):
@@ -215,10 +221,12 @@ class Main(QtGui.QMainWindow):
             for elem in eval(response[1]):
                 self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))
             LOG.debug("Inserted %s into file %s" % (response[1], txt))
+            self.filename = txt
+            self.setWindowTitle(self.filename)
             self.text.setDisabled(False)
             LOG.info("Window activated for editing")
             dialog.hide()
-            #self.updateText()
+            # self.updateText()
         else:
             LOG.warning("File with such name does not exist.")
 
