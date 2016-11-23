@@ -51,7 +51,7 @@ class Main(QtGui.QMainWindow):
 
     def run_listener_thread(self):
         LOG.info("New listener thread initialized with :%s socket." % self.sock)
-        while self.MAGIC:
+        while not self.MAGIC.isSet():
             try:
                 read, write, error = select.select([self.sock], [self.sock], [])
                 if not self.Q_out.empty():
@@ -73,7 +73,6 @@ class Main(QtGui.QMainWindow):
             except KeyboardInterrupt:
                 LOG.exception('Ctrl+C - terminating server')
                 break
-        print("kalar3")
         if self.sock is not None:
             try:
                 self.sock.close()
