@@ -104,14 +104,5 @@ class ServerProtocol:
         self.text[linenr][position] = msg
         return "swapped"
 
-    def undoProtocol(self):
-        return "undone"
-
-    def redoProtocol(self):
-        return "redone"
-
     def lockProtocol(self):
         return "locked"
-
-    def authentProtocol(self):
-        return "authenticated"
