@@ -57,13 +57,11 @@ class Server:
 
     def run_client_thread(self, client, address):
         LOG.info("New thread initialized with :%s and %s" % (str(client), address))
-        """
         try:
-            if self.editor.text == []:
-                client.send(str(self.editor.text))
+            client.send(str(self.editor.text))
         except socket.error as e:
             LOG.error("Some socket error: %s" % (str(e)))
-        """
+
         while True:
             try:
                 msg = client.recv(DEFAULT_BUFFER_SIZE)
