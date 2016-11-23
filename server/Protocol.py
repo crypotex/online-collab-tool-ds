@@ -1,4 +1,9 @@
 from file_io import FileHandler
+import logging
+
+FORMAT = '%(asctime)-15s %(levelname)s %(threadName)s %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=FORMAT)
+LOG = logging.getLogger()
 
 class ServerProtocol:
     def __init__(self):
@@ -35,13 +40,10 @@ class ServerProtocol:
         ##TODO: naiteks newline symboli puhul vms
 
     def handle_kbe(self, eventString):
-        print eventString
+
         event = eventString.split('*')
         msg = event[1]
-        print [msg]
         blk, col = map(int, event[2:])
-        print blk
-        print col
         if msg == '\x08':
             self.deleteProtocol(col, blk-1)
         else:
@@ -49,8 +51,8 @@ class ServerProtocol:
         return 'a'+eventString[1:]
 
     def insertProtocol(self, msg, position, linenr):
-        # olemas symbol, asukoht reas, reanumber
-        print self.text
+
+        LOG.debug("File before typing: %s" % str(self.text))
         ##TODO: needs fixing prolly
         try:
             self.text[linenr] = self.text[linenr][:position] + msg + self.text[linenr][position:]
@@ -63,13 +65,11 @@ class ServerProtocol:
         #if self.text[linenr][position] == '\r':
         #    self.text = self.text[:linenr] + list(self.text[linenr][:position+1]) + \
         #                list(self.text[linenr][position+1:]) + self.text[linenr+1:]
-        print self.text
-        # Need better return message - going to distribute these things to others - return the updated char/line
-        return 'inserted'
+        LOG.debug("File after typing: %s" % str(self.text))
 
     def deleteProtocol(self,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
-        print self.text
+        LOG.debug("File before deleting: %s" % str(self.text))
         if position == 0 and linenr != 0 and linenr != 1:
             try:
                 self.text[linenr-1] += self.text[linenr][1:]
@@ -78,11 +78,11 @@ class ServerProtocol:
                 except IndexError:
                     self.text = self.text[:linenr]
             except IndexError:
-                print "On the first line"
+                LOG.debug("On the first line")
         ###TODO: remove this after correct line exchange places added to client
         elif position == 0 and linenr == 0:
             self.text[0] = self.text[0][1:]
-            print "In the beginning"
+            LOG.debug("In the beginning")
         elif linenr == 1 and position == 0:
             try:
                 self.text[linenr-1] += self.text[linenr]
@@ -91,16 +91,14 @@ class ServerProtocol:
                 except IndexError:
                     self.text = self.text[:linenr]
             except IndexError:
-                print "On the first line"
+                LOG.debug("On the first line")
         else:
             try:
-                print "test1"
                 self.text[linenr] = self.text[linenr][:position] + self.text[linenr][position+1:]
             except IndexError:
-                print "test"
                 self.text[linenr] = self.text[linenr][:position]
-        print self.text
-        return "deleted"
+        LOG.debug("File after deleting: %s" % str(self.text))
+
     def swapProtocol(self,msg,position,linenr):
         ##olemas symbol, asukoht reas, reanumber
         self.text[linenr][position] = msg
