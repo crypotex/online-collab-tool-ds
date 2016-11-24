@@ -248,8 +248,10 @@ class Main(QtGui.QMainWindow):
         block_nr = cursor.blockNumber()
         col_nr = cursor.columnNumber()
 
+        # lock text area
+        self.text.setDisabled(True)
+
         # move cursor to new position to enter the letter
-        # TODO: millegip2rast paneb columniga natuke puusse, fix it!!
         cursor.setPosition(0)
         cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, n=blck)
         cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.MoveAnchor, n=col)
@@ -260,6 +262,8 @@ class Main(QtGui.QMainWindow):
         cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, n=block_nr)
         cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.MoveAnchor, n=col_nr)
         self.text.setTextCursor(cursor)
+
+        self.text.setDisabled(False)
 
     # Create connection to server
     def connect_to_server(self, server_addr, port):
