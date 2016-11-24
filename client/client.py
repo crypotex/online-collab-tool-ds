@@ -63,7 +63,7 @@ class Main(QtGui.QMainWindow):
                 if not self.Q_out.empty():
                     LOG.debug("Select: %s, %s, %s." % (read, write, error))
                     for s in write:
-                        data = self.Q_out.get_nowait()
+                        data = self.Q_out.get_nowait() + "$"
                         s.send(data.encode('utf-8'))
                 for s in read:
                     msgs = s.recv(DEFAULT_BUFFER_SIZE).decode('utf-8').split('$')

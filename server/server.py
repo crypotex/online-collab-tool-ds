@@ -63,31 +63,32 @@ class Server:
 
         while True:
             try:
-                msg = client.recv(DEFAULT_BUFFER_SIZE).decode('utf-8')
-                if len(msg) == 0:
-                    break
-                LOG.debug("Recieved message from client %s. Message was: %s." % (address, msg))
-                type, response = self.editor.handle_event(msg)
-                response = response.encode('utf-8')
-                LOG.debug("Sending response: %s to client %s. Type is: %s." % (response, address, type))
-                if type == 'b':
-                    for client_address in self.clients:
-                        LOG.debug("Broadcast response to client: %s, with message: %s." % (client_address, response))
-                        self.clients[client_address].send(response)
-                    LOG.debug("Response GOD Broadcasted.")
-                elif type == 's':
-                    client.send(response)
-                    LOG.debug("Response GODSent.")
-                elif type == 'a':
-                    for client_address in self.clients:
-
-                        if client_address != address:
-                            LOG.debug("Broadcast response to all except source. Client: %s, with message: %s."
-                                      % (client_address, response))
+                msgs = client.recv(DEFAULT_BUFFER_SIZE).decode('utf-8').split("$")[:-1]
+                for msg in msgs:
+                    if len(msg) == 0:
+                        break
+                    LOG.debug("Recieved message from client %s. Message was: %s." % (address, msg))
+                    type, response = self.editor.handle_event(msg)
+                    response = response.encode('utf-8')
+                    LOG.debug("Sending response: %s to client %s. Type is: %s." % (response, address, type))
+                    if type == 'b':
+                        for client_address in self.clients:
+                            LOG.debug("Broadcast response to client: %s, with message: %s." % (client_address, response))
                             self.clients[client_address].send(response)
-                    LOG.debug("Response GOD Broadcasted to all except source.")
-                else:
-                    LOG.debug("No such type. Something definately wrong. Type: %s and Response: %s." % (type, response))
+                        LOG.debug("Response GOD Broadcasted.")
+                    elif type == 's':
+                        client.send(response)
+                        LOG.debug("Response GODSent.")
+                    elif type == 'a':
+                        for client_address in self.clients:
+
+                            if client_address != address:
+                                LOG.debug("Broadcast response to all except source. Client: %s, with message: %s."
+                                          % (client_address, response))
+                                self.clients[client_address].send(response)
+                        LOG.debug("Response GOD Broadcasted to all except source.")
+                    else:
+                        LOG.debug("No such type. Something definately wrong. Type: %s and Response: %s." % (type, response))
             except socket.error as e:
                 LOG.error("Socket error: %s" % (str(e)))
                 break
