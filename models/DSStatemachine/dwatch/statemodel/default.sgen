@@ -1,0 +1,15 @@
+GeneratorModel for yakindu::java {
+
+	statechart digitalwatch {
+
+		feature Outlet {
+			targetProject = "hw4"
+			targetFolder = "dwatch/src-gen"
+		}
+		
+		feature GeneralFeatures {
+			RuntimeService = true
+			TimerService = true
+		}
+	}
+}
