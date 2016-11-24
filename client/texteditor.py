@@ -1,3 +1,6 @@
+# Code for line numbers
+# https://stackoverflow.com/questions/40386194/create-text-area-textedit-with-line-number-in-pyqt-5
+
 from PyQt4.Qt import Qt
 from PyQt4.QtCore import QRect
 from PyQt4.QtCore import QSize
@@ -26,6 +29,7 @@ class CodeEditor(QPlainTextEdit):
     def __init__(self, Q, outq):
         super(CodeEditor, self).__init__()
         self.lineNumberArea = LineNumberArea(self)
+        self.previous_loc = (0, 0)
 
         self.connect(self, SIGNAL('blockCountChanged(int)'), self.update_line_number_area_width)
         self.connect(self, SIGNAL('updateRequest(QRect,int)'), self.update_line_number_area)
@@ -104,9 +108,12 @@ class CodeEditor(QPlainTextEdit):
             extra_selections.append(selection)
         self.setExtraSelections(extra_selections)
 
+    def keyPressEvent(self, QKeyEvent):
+        self.previous_loc = (self.textCursor().blockNumber() + 1, self.textCursor().columnNumber())
+        print "Prev_blck: %s, prev_col: %s" % self.previous_loc
+        return super(CodeEditor, self).keyPressEvent(QKeyEvent)
+
+
     def keyReleaseEvent(self, QKeyEvent):
         l = QKeyEvent.text()
-        cursor_loc = self.textCursor()
-        blck_nr = cursor_loc.blockNumber() + 1
-        col_nr = cursor_loc.columnNumber()
-        self.Q_out.put("%s*%s*%d*%d" % ("k", l, blck_nr, col_nr), timeout=1)
+        self.Q_out.put("%s*%s*%d*%d" % ("k", l, self.previous_loc[0], self.previous_loc[1]), timeout=1)

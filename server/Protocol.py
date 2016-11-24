@@ -5,6 +5,7 @@ FORMAT = '%(asctime)-15s %(levelname)s %(threadName)s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 LOG = logging.getLogger()
 
+
 class ServerProtocol:
     def __init__(self):
         self.text = []
@@ -46,10 +47,10 @@ class ServerProtocol:
         msg = event[1]
         blk, col = map(int, event[2:])
         if msg == '\x08':
-            self.deleteProtocol(col, blk-1)
+            self.deleteProtocol(col, blk - 1)
         else:
-            self.insertProtocol(msg, col-1, blk-1)
-        return 'a'+eventString[1:]
+            self.insertProtocol(msg, col, blk - 1)
+        return 'a' + eventString[1:]
 
     def insertProtocol(self, msg, position, linenr):
 
@@ -63,19 +64,19 @@ class ServerProtocol:
             except IndexError:
                 self.text += msg
         ####TODO: line change in the middle of the line
-        #if self.text[linenr][position] == '\r':
+        # if self.text[linenr][position] == '\r':
         #    self.text = self.text[:linenr] + list(self.text[linenr][:position+1]) + \
         #                list(self.text[linenr][position+1:]) + self.text[linenr+1:]
         LOG.debug("File after typing: %s" % str(self.text))
 
-    def deleteProtocol(self,position,linenr):
+    def deleteProtocol(self, position, linenr):
         ##olemas symbol, asukoht reas, reanumber
         LOG.debug("File before deleting: %s" % str(self.text))
         if position == 0 and linenr != 0 and linenr != 1:
             try:
-                self.text[linenr-1] += self.text[linenr][1:]
+                self.text[linenr - 1] += self.text[linenr][1:]
                 try:
-                    self.text = self.text[:linenr] + self.text[linenr+1:]
+                    self.text = self.text[:linenr] + self.text[linenr + 1:]
                 except IndexError:
                     self.text = self.text[:linenr]
             except IndexError:
@@ -86,21 +87,21 @@ class ServerProtocol:
             LOG.debug("In the beginning")
         elif linenr == 1 and position == 0:
             try:
-                self.text[linenr-1] += self.text[linenr]
+                self.text[linenr - 1] += self.text[linenr]
                 try:
-                    self.text = self.text[:linenr] + self.text[linenr+1:]
+                    self.text = self.text[:linenr] + self.text[linenr + 1:]
                 except IndexError:
                     self.text = self.text[:linenr]
             except IndexError:
                 LOG.debug("On the first line")
         else:
             try:
-                self.text[linenr] = self.text[linenr][:position] + self.text[linenr][position+1:]
+                self.text[linenr] = self.text[linenr][:position] + self.text[linenr][position + 1:]
             except IndexError:
                 self.text[linenr] = self.text[linenr][:position]
         LOG.debug("File after deleting: %s" % str(self.text))
 
-    def swapProtocol(self,msg,position,linenr):
+    def swapProtocol(self, msg, position, linenr):
         ##olemas symbol, asukoht reas, reanumber
         self.text[linenr][position] = msg
         return "swapped"

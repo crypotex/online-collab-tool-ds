@@ -1,6 +1,4 @@
 # Code taken from https://www.binpress.com/tutorial/building-a-text-editor-with-pyqt-part-one/143
-# Code for line numbers
-# https://stackoverflow.com/questions/40386194/create-text-area-textedit-with-line-number-in-pyqt-5
 
 import logging
 import sys
@@ -68,7 +66,6 @@ class Main(QtGui.QMainWindow):
                         data = self.Q_out.get_nowait()
                         s.send(data.encode('utf-8'))
                 for s in read:
-                    LOG.debug("Select: %s, %s, %s." % (read, write, error))
                     msg = s.recv(DEFAULT_BUFFER_SIZE).decode('utf-8')
                     LOG.debug("Got message from server: %s." % msg)
                     if msg.split('*')[0] == 'a':
@@ -198,13 +195,6 @@ class Main(QtGui.QMainWindow):
             if fileslist:
                 self.dialog_for_files(fileslist)
 
-    # Create connection to server
-    def connect_to_server(self, server_addr, port):
-        sokk = socket(AF_INET, SOCK_STREAM)
-        sokk.connect((server_addr, port))
-        LOG.info("Connected to server: %s" % ((server_addr, port),))
-        return sokk
-
     # Opens a dialog which shows the files in server and where client can choose the file to be opened
     def dialog_for_files(self, fileslist):
         layout = QVBoxLayout()
@@ -251,7 +241,7 @@ class Main(QtGui.QMainWindow):
         data = msg.split('*')
         letter = data[1]
         blck = int(data[2]) - 1
-        col = int(data[3]) - 1
+        col = int(data[3])
 
         # old place for cursor
         cursor = self.text.textCursor()
@@ -270,6 +260,13 @@ class Main(QtGui.QMainWindow):
         cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, n=block_nr)
         cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.MoveAnchor, n=col_nr)
         self.text.setTextCursor(cursor)
+
+    # Create connection to server
+    def connect_to_server(self, server_addr, port):
+        sokk = socket(AF_INET, SOCK_STREAM)
+        sokk.connect((server_addr, port))
+        LOG.info("Connected to server: %s" % ((server_addr, port),))
+        return sokk
 
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Confirm exit', "Are you sure you want to exit?",
