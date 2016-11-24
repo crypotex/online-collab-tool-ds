@@ -45,6 +45,7 @@ class Main(QtGui.QMainWindow):
         self.connect(self, SIGNAL('add'), self.update_text)
         self.connect(self, SIGNAL('open'), self.open_file_handler)
         self.connect(self, SIGNAL('new'), self.new_file_handler)
+        self.connect(self, SIGNAL('delete'), self.delete_text)
         init_txt = self.sock.recv(DEFAULT_BUFFER_SIZE)
         self.dialog = QDialog()
 
@@ -68,6 +69,8 @@ class Main(QtGui.QMainWindow):
                 for s in read:
                     msg = s.recv(DEFAULT_BUFFER_SIZE).decode('utf-8')
                     LOG.debug("Got message from server: %s." % msg)
+                    if msg.split('*')[0] == 'd':
+                        self.emit(SIGNAL('delete'), msg)
                     if msg.split('*')[0] == 'a':
                         self.emit(SIGNAL('add'), msg)
                     elif len(msg.split('*')) >= 3 and msg.split('*')[0] == 'OK':
@@ -125,6 +128,7 @@ class Main(QtGui.QMainWindow):
         # or some file is opened
         self.text.setDisabled(True)
 
+        LOG.debug("SERVERIST TULEB:: %s" % text)
         for elem in eval(text):
             self.text.appendPlainText(elem.strip())
         self.text.setDisabled(False)
@@ -248,9 +252,6 @@ class Main(QtGui.QMainWindow):
         block_nr = cursor.blockNumber()
         col_nr = cursor.columnNumber()
 
-        # lock text area
-        self.text.setDisabled(True)
-
         # move cursor to new position to enter the letter
         cursor.setPosition(0)
         cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, n=blck)
@@ -263,7 +264,27 @@ class Main(QtGui.QMainWindow):
         cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.MoveAnchor, n=col_nr)
         self.text.setTextCursor(cursor)
 
-        self.text.setDisabled(False)
+    def delete_text(self, msg):
+        data = msg.split('*')
+        blck = int(data[1]) - 1
+        col = int(data[2])
+
+        # old place for cursor
+        cursor = self.text.textCursor()
+        block_nr = cursor.blockNumber()
+        col_nr = cursor.columnNumber()
+
+        # move cursor to new position to enter the letter
+        cursor.setPosition(0)
+        cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, n=blck)
+        cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.MoveAnchor, n=col)
+        cursor.deletePreviousChar()
+
+        # move the cursor back to the original place for the user
+        cursor.setPosition(0)
+        cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, n=block_nr)
+        cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.MoveAnchor, n=col_nr)
+        self.text.setTextCursor(cursor)
 
     # Create connection to server
     def connect_to_server(self, server_addr, port):

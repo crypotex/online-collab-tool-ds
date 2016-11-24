@@ -11,7 +11,7 @@ class ServerProtocol:
         self.text = []
         self.file = FileHandler()
 
-    def handleEvent(self, eventString):
+    def handle_event(self, eventString):
         if eventString.startswith('k'):
             return 'a', self.handle_kbe(eventString)
         elif eventString.startswith('n'):
@@ -38,21 +38,18 @@ class ServerProtocol:
     def save_text(self):
         self.file.save(self.text)
 
-        ##TODO: kuidagi peab handlima ka lockimise protokolli, toenaoliselt teiste protokollide sees
-        ##TODO: naiteks newline symboli puhul vms
-
     def handle_kbe(self, eventString):
-
         event = eventString.split('*')
         msg = event[1]
         blk, col = map(int, event[2:])
-        if msg == '\x08':
-            self.deleteProtocol(col, blk - 1)
+        if msg == 'backspace':
+            self.delete_protocol(col + 1, blk - 1)
+            return 'd*%s*%s' % (blk, col)
         else:
-            self.insertProtocol(msg, col, blk - 1)
-        return 'a' + eventString[1:]
+            self.insert_protocol(msg, col, blk - 1)
+            return 'a' + eventString[1:]
 
-    def insertProtocol(self, msg, position, linenr):
+    def insert_protocol(self, msg, position, linenr):
 
         LOG.debug("File before typing: %s" % str(self.text))
         ##TODO: needs fixing prolly
@@ -69,7 +66,9 @@ class ServerProtocol:
         #                list(self.text[linenr][position+1:]) + self.text[linenr+1:]
         LOG.debug("File after typing: %s" % str(self.text))
 
-    def deleteProtocol(self, position, linenr):
+    def delete_protocol(self, position, linenr):
+        LOG.debug("Line: %s, col: %s" % (linenr, position))
+        LOG.debug("len text: %s" % len(self.text))
         ##olemas symbol, asukoht reas, reanumber
         LOG.debug("File before deleting: %s" % str(self.text))
         if position == 0 and linenr != 0 and linenr != 1:
@@ -96,15 +95,8 @@ class ServerProtocol:
                 LOG.debug("On the first line")
         else:
             try:
-                self.text[linenr] = self.text[linenr][:position] + self.text[linenr][position + 1:]
+                self.text[linenr] = self.text[linenr][:position - 2] + self.text[linenr][position:]
+                LOG.debug("%s, %d" % (self.text, linenr))
             except IndexError:
                 self.text[linenr] = self.text[linenr][:position]
         LOG.debug("File after deleting: %s" % str(self.text))
-
-    def swapProtocol(self, msg, position, linenr):
-        ##olemas symbol, asukoht reas, reanumber
-        self.text[linenr][position] = msg
-        return "swapped"
-
-    def lockProtocol(self):
-        return "locked"

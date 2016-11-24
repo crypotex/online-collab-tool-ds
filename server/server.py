@@ -67,7 +67,7 @@ class Server:
                 if len(msg) == 0:
                     break
                 LOG.debug("Recieved message from client %s. Message was: %s." % (address, msg))
-                type, response = self.editor.handleEvent(msg)
+                type, response = self.editor.handle_event(msg)
                 response = response.encode('utf-8')
                 LOG.debug("Sending response: %s to client %s. Type is: %s." % (response, address, type))
                 if type == 'b':

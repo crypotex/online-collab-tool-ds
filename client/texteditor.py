@@ -116,4 +116,7 @@ class CodeEditor(QPlainTextEdit):
 
     def keyReleaseEvent(self, QKeyEvent):
         l = QKeyEvent.text()
+        if QKeyEvent.key() == Qt.Key_Backspace:
+            print QKeyEvent.key()
+            l = 'backspace'
         self.Q_out.put("%s*%s*%d*%d" % ("k", l, self.previous_loc[0], self.previous_loc[1]), timeout=1)
