@@ -66,33 +66,22 @@ class Main(QtGui.QMainWindow):
                         data = self.Q_out.get_nowait()
                         s.send(data.encode('utf-8'))
                 for s in read:
-                    msg = s.recv(DEFAULT_BUFFER_SIZE).decode('utf-8').split('*')
-                    c = 0
-                    while c < len(msg):
+                    msgs = s.recv(DEFAULT_BUFFER_SIZE).decode('utf-8').split('$')
+                    for msg in msgs[:-1]:
                         LOG.debug("Got message from server: %s." % msg)
-                        if len(msg[c]) == 1:
-                            if msg[c] == 'd':
-                                self.emit(SIGNAL('delete'), "*".join(msg[c:c+3]))
-                                c += 3
-                            elif msg[c] == 'a':
-                                self.emit(SIGNAL('add'), "*".join(msg[c:c+4]))
-                                c += 4
-                            elif msg[c] == 'f':
-                                self.Q.put("*".join(msg[c:c+2]))
-                                c += 2
-                            else:
-                                LOG.debug("Response unknown: %s" % msg)
-                                break
-                        elif msg[c] == 'OK':
-                            self.emit(SIGNAL('new'), "*".join(msg[c:c+2]))
-                            c += 2
-                        elif msg[c] == 'KK':
-                            self.emit(SIGNAL('open'), "*".join(msg[c:c+3]), self.dialog)
-                            c += 3
+                        if msg.startswith('d'):
+                            self.emit(SIGNAL('delete'), msg)
+                        elif msg.startswith('a'):
+                            self.emit(SIGNAL('add'), msg)
+                        elif msg.startswith('f'):
+                            self.Q.put(msg)
+                        elif msg.startswith('OK'):
+                            self.emit(SIGNAL('new'), msg)
+                        elif msg.startswith('KK'):
+                            self.emit(SIGNAL('open'), msg, self.dialog)
                         else:
                             # Might use better block/timeout <- check this out
-                            self.Q.put("*".join(msg[c:c+3]), block=True, timeout=1)
-                            c += 3
+                            self.Q.put(msg, block=True, timeout=1)
                             LOG.debug("Response: %s added to Q." % msg)
             except so_err as e:
                 LOG.error("Socket error: %s" % (str(e)))
@@ -243,7 +232,7 @@ class Main(QtGui.QMainWindow):
         if response[0] == "KK":
             self.text.clear()
             for elem in eval(response[2]):
-                self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))
+                self.text.appendPlainText(elem.strip())
                 LOG.debug("Inserted %s into file %s" % (elem, response[1]))
             self.filename = response[1]
             self.setWindowTitle(self.filename)

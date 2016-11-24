@@ -21,7 +21,7 @@ class ServerProtocol:
             msg, txt = self.file.new_file(fname)
             if msg == "OK":
                 self.text = txt
-            return 'b', "%s*%s" % (msg, fname)
+            return 'b', "%s*%s$" % (msg, fname)
         elif eventString.startswith('o'):
             if len(self.text) > 0:
                 self.file.save(self.text)
@@ -29,9 +29,9 @@ class ServerProtocol:
             msg, txt = self.file.open_file(fname)
             if msg == "KK":
                 self.text = txt
-            return 'b', "%s*%s*%s" % (msg, fname, self.text)
+            return 'b', "%s*%s*%s$" % (msg, fname, self.text)
         elif eventString.startswith('l'):
-            return 's', "%s*%s" % ("f", self.file.list_files())
+            return 's', "%s*%s$" % ("f", self.file.list_files())
         else:
             raise RuntimeError("No such thing")
 
@@ -44,10 +44,10 @@ class ServerProtocol:
         blk, col = map(int, event[2:])
         if msg == 'backspace':
             self.delete_protocol(col + 1, blk - 1)
-            return 'd*%s*%s' % (blk, col)
+            return 'd*%s*%s$' % (blk, col)
         else:
             self.insert_protocol(msg, col, blk - 1)
-            return 'a' + eventString[1:]
+            return 'a' + eventString[1:] + '$'
 
     def insert_protocol(self, msg, position, linenr):
 
