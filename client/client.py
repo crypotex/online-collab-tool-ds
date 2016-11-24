@@ -63,7 +63,6 @@ class Main(QtGui.QMainWindow):
                 if not self.Q_out.empty():
                     LOG.debug("Select: %s, %s, %s." % (read, write, error))
                     for s in write:
-                        print(s)
                         data = self.Q_out.get_nowait()
                         s.send(data.encode('utf-8'))
                 for s in read:
@@ -78,6 +77,12 @@ class Main(QtGui.QMainWindow):
                             elif msg[c] == 'a':
                                 self.emit(SIGNAL('add'), "*".join(msg[c:c+4]))
                                 c += 4
+                            elif msg[c] == 'f':
+                                self.Q.put("*".join(msg[c:c+2]))
+                                c += 2
+                            else:
+                                LOG.debug("Response unknown: %s" % msg)
+                                break
                         elif msg[c] == 'OK':
                             self.emit(SIGNAL('new'), "*".join(msg[c:c+2]))
                             c += 2
@@ -136,7 +141,6 @@ class Main(QtGui.QMainWindow):
         # or some file is opened
         self.text.setDisabled(True)
 
-        LOG.debug("SERVERIST TULEB:: %s" % text)
         for elem in eval(text):
             self.text.appendPlainText(elem.strip())
         self.text.setDisabled(False)
@@ -236,7 +240,7 @@ class Main(QtGui.QMainWindow):
     #  Closes the dialog box, enters text inside textbox and sets filename
     def open_file_handler(self, response, dialog):
         response = response.split('*')
-        if response[0] == "OK":
+        if response[0] == "KK":
             self.text.clear()
             for elem in eval(response[2]):
                 self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))

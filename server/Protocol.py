@@ -27,7 +27,7 @@ class ServerProtocol:
                 self.file.save(self.text)
             fname = eventString.strip().split("*")[-1]
             msg, txt = self.file.open_file(fname)
-            if msg == "OK":
+            if msg == "KK":
                 self.text = txt
             return 'b', "%s*%s*%s" % (msg, fname, self.text)
         elif eventString.startswith('l'):
@@ -52,7 +52,6 @@ class ServerProtocol:
     def insert_protocol(self, msg, position, linenr):
 
         LOG.debug("File before typing: %s" % str(self.text))
-        ##TODO: needs fixing prolly
         try:
             self.text[linenr] = self.text[linenr][:position] + msg + self.text[linenr][position:]
         except IndexError:
@@ -60,10 +59,6 @@ class ServerProtocol:
                 self.text[linenr] = msg
             except IndexError:
                 self.text += msg
-        ####TODO: line change in the middle of the line
-        # if self.text[linenr][position] == '\r':
-        #    self.text = self.text[:linenr] + list(self.text[linenr][:position+1]) + \
-        #                list(self.text[linenr][position+1:]) + self.text[linenr+1:]
         LOG.debug("File after typing: %s" % str(self.text))
 
     def delete_protocol(self, position, linenr):
@@ -80,7 +75,6 @@ class ServerProtocol:
                     self.text = self.text[:linenr]
             except IndexError:
                 LOG.debug("On the first line")
-        ###TODO: remove this after correct line exchange places added to client
         elif position == 0 and linenr == 0:
             self.text[0] = self.text[0][1:]
             LOG.debug("In the beginning")
@@ -98,5 +92,5 @@ class ServerProtocol:
                 self.text[linenr] = self.text[linenr][:position - 2] + self.text[linenr][position:]
                 LOG.debug("%s, %d" % (self.text, linenr))
             except IndexError:
-                self.text[linenr] = self.text[linenr][:position]
+                self.text[linenr] = self.text[linenr][:position - 2]
         LOG.debug("File after deleting: %s" % str(self.text))

@@ -1,5 +1,6 @@
 from os import listdir
 from os.path import exists, join, abspath, dirname
+import codecs
 
 
 class FileHandler:
@@ -28,7 +29,7 @@ class FileHandler:
             return "File with such name does not exist", None
         txt = []
         try:
-            with open(self.fname, "r") as f:
+            with codecs.open(self.fname, "r", encoding='utf8') as f:
                 for line in f:
                     txt.append(line[:-1])
         except IOError:
@@ -37,7 +38,7 @@ class FileHandler:
 
     def save(self, txt):
         try:
-            with open(self.fname, "w") as f:
+            with codecs.open(self.fname, "w", encoding='utf8') as f:
                 for line in txt:
                     f.write(line+'\n')
         except IOError:

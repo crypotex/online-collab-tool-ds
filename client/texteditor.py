@@ -110,7 +110,6 @@ class CodeEditor(QPlainTextEdit):
 
     def keyPressEvent(self, QKeyEvent):
         self.previous_loc = (self.textCursor().blockNumber() + 1, self.textCursor().columnNumber())
-        print "Prev_blck: %s, prev_col: %s" % self.previous_loc
         return super(CodeEditor, self).keyPressEvent(QKeyEvent)
 
 
