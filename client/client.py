@@ -243,7 +243,7 @@ class Main(QtGui.QMainWindow):
         data = msg.split('*')
         letter = data[1]
         blck = int(data[2]) - 1
-        col = int(data[3])
+        col = int(data[3]) - 1
 
         # old place for cursor
         cursor = self.text.textCursor()
