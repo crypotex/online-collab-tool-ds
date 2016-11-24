@@ -67,20 +67,28 @@ class Main(QtGui.QMainWindow):
                         data = self.Q_out.get_nowait()
                         s.send(data.encode('utf-8'))
                 for s in read:
-                    msg = s.recv(DEFAULT_BUFFER_SIZE).decode('utf-8')
-                    LOG.debug("Got message from server: %s." % msg)
-                    if msg.split('*')[0] == 'd':
-                        self.emit(SIGNAL('delete'), msg)
-                    if msg.split('*')[0] == 'a':
-                        self.emit(SIGNAL('add'), msg)
-                    elif len(msg.split('*')) >= 3 and msg.split('*')[0] == 'OK':
-                        self.emit(SIGNAL('open'), msg, self.dialog)
-                    elif len(msg.split('*')) == 2 and msg.split('*')[0] == 'OK':
-                        self.emit(SIGNAL('new'), msg)
-                    else:
-                        # Might use better block/timeout <- check this out
-                        self.Q.put(msg, block=True, timeout=1)
-                        LOG.debug("Response: %s added to Q." % msg)
+                    msg = s.recv(DEFAULT_BUFFER_SIZE).decode('utf-8').split('*')
+                    c = 0
+                    while c < len(msg):
+                        LOG.debug("Got message from server: %s." % msg)
+                        if len(msg[c]) == 1:
+                            if msg[c] == 'd':
+                                self.emit(SIGNAL('delete'), "*".join(msg[c:c+3]))
+                                c += 3
+                            elif msg[c] == 'a':
+                                self.emit(SIGNAL('add'), "*".join(msg[c:c+4]))
+                                c += 4
+                        elif msg[c] == 'OK':
+                            self.emit(SIGNAL('new'), "*".join(msg[c:c+2]))
+                            c += 2
+                        elif msg[c] == 'KK':
+                            self.emit(SIGNAL('open'), "*".join(msg[c:c+3]), self.dialog)
+                            c += 3
+                        else:
+                            # Might use better block/timeout <- check this out
+                            self.Q.put("*".join(msg[c:c+3]), block=True, timeout=1)
+                            c += 3
+                            LOG.debug("Response: %s added to Q." % msg)
             except so_err as e:
                 LOG.error("Socket error: %s" % (str(e)))
                 break

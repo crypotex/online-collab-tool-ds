@@ -33,7 +33,7 @@ class FileHandler:
                     txt.append(line[:-1])
         except IOError:
             return "ERRRRRRRRORTRAIN", None
-        return "OK", txt
+        return "KK", txt
 
     def save(self, txt):
         try:
