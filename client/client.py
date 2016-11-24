@@ -12,6 +12,7 @@ from PyQt4 import QtGui
 from argparse import ArgumentParser
 from socket import AF_INET, SOCK_STREAM, socket, error as so_err
 
+from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QComboBox
 from PyQt4.QtGui import QDialog
 from PyQt4.QtGui import QDialogButtonBox
@@ -25,7 +26,7 @@ from texteditor import CodeEditor
 
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
 DEFAULT_SERVER_PORT = 49995
-DEFAULT_BUFFER_SIZE = 1024*1024
+DEFAULT_BUFFER_SIZE = 1024 * 1024
 
 FORMAT = '%(asctime)-15s %(levelname)s %(threadName)s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=FORMAT)
@@ -43,6 +44,7 @@ class Main(QtGui.QMainWindow):
         self.sock = self.connect_to_server(self.server_addr, self.port)
 
         self.filename = "Untitled"
+        self.connect(self, SIGNAL('add'), self.update_text)
         init_txt = self.sock.recv(DEFAULT_BUFFER_SIZE)
 
         self.Q = Queue(maxsize=1024)
@@ -67,7 +69,7 @@ class Main(QtGui.QMainWindow):
                     msg = s.recv(DEFAULT_BUFFER_SIZE)
                     LOG.debug("Got message from server: %s." % msg)
                     if msg.split('*')[0] == 'a':
-                        self.update_text(msg)
+                        self.emit(SIGNAL('add'), msg)
                     else:
                         # Might use better block/timeout <- check this out
                         self.Q.put(msg, block=True, timeout=1)
@@ -236,41 +238,30 @@ class Main(QtGui.QMainWindow):
             # self.handle_request()
         else:
             LOG.warning("File with such name does not exist.")
-    """
-    def handle_request(self):
-        response = self.Q.get(timeout=2).split('*')
-        while True:
-            if response[0] == 'a':
-                LOG.debug("Received response from server")
-                self.update_text()
-                response = self.Q.get(timeout=2).split('*')
-            elif response[0] == 'OK' and len(response[1]) == 0:
-                self.new()
-            elif response[0] == 'OK' and len(response[1]) > 0:
-                self.open()
-            else:
-                print("Whyyyy???")
-    """
 
     def update_text(self, msg):
         data = msg.split('*')
         letter = data[1]
-        blck = data[2]
-        col = data[3]
-        LOG.debug("Letter: %s, blck: %s, col: %s" % (letter, blck, col))
-        # algus = self.text.cursor()
+        blck = int(data[2]) - 1
+        col = int(data[3])
+
+        # old place for cursor
         cursor = self.text.textCursor()
-        block_nr = cursor.blockNumber() + 1
+        block_nr = cursor.blockNumber()
         col_nr = cursor.columnNumber()
-        LOG.debug("Line: %d, column: %d" % (block_nr, col_nr))
-        #self.text.moveCursor(2, 2)
+
+        # move cursor to new position to enter the letter
+        # TODO: millegip2rast paneb columniga natuke puusse, fix it!!
         cursor.setPosition(0)
-        cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, n=int(blck))
-        cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.MoveAnchor, n=int(col))
-        self.text.setTextCursor(cursor) # sets the cursor to the new place
-        LOG.debug("New! Line: %d, column: %d" % (cursor.blockNumber(), cursor.columnNumber()))
-        self.text.insertPlainText(letter)
-        #self.text.moveCursor(block_nr, col_nr)
+        cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, n=blck)
+        cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.MoveAnchor, n=col)
+        cursor.insertText(letter)
+
+        # move the cursor back to the original place for the user
+        cursor.setPosition(0)
+        cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, n=block_nr)
+        cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.MoveAnchor, n=col_nr)
+        self.text.setTextCursor(cursor)
 
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Confirm exit', "Are you sure you want to exit?",
@@ -299,7 +290,7 @@ def main():
 
     args = parser.parse_args()
 
-    registerMe = QtCore.QVariant(Main)
+    QtCore.QVariant(Main)
     app = QtGui.QApplication(sys.argv)
     main_window = Main(args.host, args.port)
     main_window.show()
