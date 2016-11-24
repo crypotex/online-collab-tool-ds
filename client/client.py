@@ -45,7 +45,10 @@ class Main(QtGui.QMainWindow):
 
         self.filename = "Untitled"
         self.connect(self, SIGNAL('add'), self.update_text)
+        self.connect(self, SIGNAL('open'), self.open_file_handler)
+        self.connect(self, SIGNAL('new'), self.new_file_handler)
         init_txt = self.sock.recv(DEFAULT_BUFFER_SIZE)
+        self.dialog = QDialog()
 
         self.Q = Queue(maxsize=1024)
         self.Q_out = Queue(maxsize=1024)
@@ -63,13 +66,17 @@ class Main(QtGui.QMainWindow):
                     for s in write:
                         print(s)
                         data = self.Q_out.get_nowait()
-                        s.send(data)
+                        s.send(data.encode('utf-8'))
                 for s in read:
                     LOG.debug("Select: %s, %s, %s." % (read, write, error))
-                    msg = s.recv(DEFAULT_BUFFER_SIZE)
+                    msg = s.recv(DEFAULT_BUFFER_SIZE).decode('utf-8')
                     LOG.debug("Got message from server: %s." % msg)
                     if msg.split('*')[0] == 'a':
                         self.emit(SIGNAL('add'), msg)
+                    elif len(msg.split('*')) >= 3 and msg.split('*')[0] == 'OK':
+                        self.emit(SIGNAL('open'), msg, self.dialog)
+                    elif len(msg.split('*')) == 2 and msg.split('*')[0] == 'OK':
+                        self.emit(SIGNAL('new'), msg)
                     else:
                         # Might use better block/timeout <- check this out
                         self.Q.put(msg, block=True, timeout=1)
@@ -120,13 +127,10 @@ class Main(QtGui.QMainWindow):
         # window is disabled until new file is made
         # or some file is opened
         self.text.setDisabled(True)
-        # txt = '[]' if self.Q.empty() else self.Q.get(timeout=2)
-        if text != '[]':
-            for elem in eval(text):
-                self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))
-            self.text.setDisabled(False)
-        else:
-            self.text.setPlainText("")
+
+        for elem in eval(text):
+            self.text.appendPlainText(elem.strip())
+        self.text.setDisabled(False)
 
         self.init_toolbar()
         self.init_formatbar()
@@ -164,13 +168,6 @@ class Main(QtGui.QMainWindow):
         if str(filename).endswith('.txt') and ok:
             self.Q_out.put('%s*%s' % ('n', filename), timeout=2)
             LOG.debug("Sent filename %s to server %s to be created" % (filename, self.sock.getpeername()))
-            if self.Q.get(timeout=2).split('*')[0] == 'OK':
-                LOG.debug("File %s created in server" % filename)
-                self.filename = str(filename)
-                self.setWindowTitle(self.filename)
-                self.text.clear()
-                self.text.setDisabled(False)
-                LOG.info("Window activated for editing")
         elif not str(filename).endswith('.txt') and ok:
             LOG.debug("Filename %s doesn't end with .txt" % filename)
             warning = QMessageBox()
@@ -180,13 +177,23 @@ class Main(QtGui.QMainWindow):
             warning.setStandardButtons(QMessageBox.Ok)
             warning.exec_()
 
+    def new_file_handler(self, response):
+        response = response.split('*')
+        if response[0] == 'OK':
+            LOG.debug("File %s created in server" % response[1])
+            self.filename = str(response[1])
+            self.setWindowTitle(self.filename)
+            self.text.clear()
+            self.text.setDisabled(False)
+            LOG.info("Window activated for editing")
+
     def open(self):
         self.Q_out.put('%s*' % 'l', timeout=2)
 
         response = self.Q.get(timeout=2).split('*')
         LOG.debug("Received filenames %s from server %s" % (response, self.sock.getpeername()))
 
-        if response[0] == 'OK':
+        if response[0] == 'f':
             fileslist = eval(response[1])
             if fileslist:
                 self.dialog_for_files(fileslist)
@@ -202,12 +209,11 @@ class Main(QtGui.QMainWindow):
     def dialog_for_files(self, fileslist):
         layout = QVBoxLayout()
 
-        dialog = QDialog(self)
-        dialog.setLayout(layout)
-        dialog.setWindowTitle('Choose file from the list')
-        dialog.setMinimumSize(200, 80)
-        dialog.setGeometry(400, 400, 300, 80)
-        dialog.show()
+        self.dialog.setLayout(layout)
+        self.dialog.setWindowTitle('Open file from the list')
+        self.dialog.setMinimumSize(200, 80)
+        self.dialog.setGeometry(400, 400, 300, 80)
+        self.dialog.show()
 
         box = QComboBox()
         box.clear()
@@ -217,25 +223,27 @@ class Main(QtGui.QMainWindow):
 
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         layout.addWidget(button_box)
-        button_box.accepted.connect(lambda: self.open_file_handler(str(box.currentText()), dialog))
-        button_box.rejected.connect(dialog.reject)
+        button_box.accepted.connect(lambda: self.send_filename_to_server(str(box.currentText())))
+        button_box.rejected.connect(self.dialog.reject)
 
-    # Sends the filename to server for open and closes the dialog box
-    def open_file_handler(self, txt, dialog):
+    # Sends the filename to server for opening
+    def send_filename_to_server(self, txt):
         self.Q_out.put('o*' + txt, timeout=2)
         LOG.debug("Sent filename %s to server %s to be opened" % (txt, self.sock.getpeername()))
-        response = self.Q.get(timeout=2).split('*')
+
+    #  Closes the dialog box, enters text inside textbox and sets filename
+    def open_file_handler(self, response, dialog):
+        response = response.split('*')
         if response[0] == "OK":
             self.text.clear()
-            for elem in eval(response[1]):
+            for elem in eval(response[2]):
                 self.text.appendPlainText(unicode(elem.strip(), 'utf-8'))
-            LOG.debug("Inserted %s into file %s" % (response[1], txt))
-            self.filename = txt
+                LOG.debug("Inserted %s into file %s" % (elem, response[1]))
+            self.filename = response[1]
             self.setWindowTitle(self.filename)
             self.text.setDisabled(False)
             LOG.info("Window activated for editing")
             dialog.hide()
-            # self.handle_request()
         else:
             LOG.warning("File with such name does not exist.")
 

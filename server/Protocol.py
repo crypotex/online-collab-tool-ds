@@ -14,12 +14,13 @@ class ServerProtocol:
         if eventString.startswith('k'):
             return 'a', self.handle_kbe(eventString)
         elif eventString.startswith('n'):
+            fname = eventString.strip().split("*")[-1]
             if len(self.text) > 0:
                 self.file.save(self.text)
-            msg, txt = self.file.new_file(eventString[2:])
+            msg, txt = self.file.new_file(fname)
             if msg == "OK":
                 self.text = txt
-            return 'b', msg
+            return 'b', "%s*%s" % (msg, fname)
         elif eventString.startswith('o'):
             if len(self.text) > 0:
                 self.file.save(self.text)
@@ -27,9 +28,9 @@ class ServerProtocol:
             msg, txt = self.file.open_file(fname)
             if msg == "OK":
                 self.text = txt
-            return 'b', "%s*%s" % (msg, self.text)
+            return 'b', "%s*%s*%s" % (msg, fname, self.text)
         elif eventString.startswith('l'):
-            return 's', "%s*%s" % ("OK", self.file.list_files())
+            return 's', "%s*%s" % ("f", self.file.list_files())
         else:
             raise RuntimeError("No such thing")
 

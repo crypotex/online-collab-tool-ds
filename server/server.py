@@ -63,11 +63,12 @@ class Server:
 
         while True:
             try:
-                msg = client.recv(DEFAULT_BUFFER_SIZE)
+                msg = client.recv(DEFAULT_BUFFER_SIZE).decode('utf-8')
                 if len(msg) == 0:
                     break
                 LOG.debug("Recieved message from client %s. Message was: %s." % (address, msg))
                 type, response = self.editor.handleEvent(msg)
+                response = response.encode('utf-8')
                 LOG.debug("Sending response: %s to client %s. Type is: %s." % (response, address, type))
                 if type == 'b':
                     for client_address in self.clients:
